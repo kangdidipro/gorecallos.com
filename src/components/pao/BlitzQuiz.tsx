@@ -7,7 +7,7 @@ import { PAO_DATABASE, PAOEntry } from '@/lib/pao-data';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { usePAOStore } from '@/hooks/use-pao-store';
-import { Timer, X, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Timer, X, CheckCircle2, AlertCircle, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type QuizState = 'START' | 'PLAYING' | 'RESULT';
@@ -25,11 +25,20 @@ const LEVEL_THEMES: Record<number, string> = {
   10: "Reformasi & Era",
 };
 
+const SPEEDS = [
+  { label: 'Sangat Lambat', value: 15 },
+  { label: 'Lambat', value: 10 },
+  { label: 'Normal', value: 5 },
+  { label: 'Cepat', value: 3 },
+  { label: 'Sangat Cepat', value: 1.5 },
+];
+
 export function BlitzQuiz() {
   const { neuralStrength, updateStrength } = usePAOStore();
   
   const [state, setState] = useState<QuizState>('START');
   const [selectedLevels, setSelectedLevels] = useState<number[]>([1]);
+  const [duration, setDuration] = useState(5);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(5);
@@ -94,11 +103,11 @@ export function BlitzQuiz() {
     setQuestions(quizQuestions);
     setScore(0);
     setCurrentIndex(0);
-    setTimeLeft(5);
+    setTimeLeft(duration);
     setSelectedOption(null);
     setIsChecking(false);
     setState('PLAYING');
-  }, [selectedLevels, neuralStrength]);
+  }, [selectedLevels, neuralStrength, duration]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -131,7 +140,7 @@ export function BlitzQuiz() {
     setTimeout(() => {
       if (currentIndex < questions.length - 1) {
         setCurrentIndex(prev => prev + 1);
-        setTimeLeft(5);
+        setTimeLeft(duration);
         setSelectedOption(null);
         setIsChecking(false);
       } else {
@@ -153,12 +162,13 @@ export function BlitzQuiz() {
           >
             <div className="space-y-2">
               <h2 className="text-4xl font-bold font-headline text-primary neon-glow">The Blitz Quiz</h2>
-              <p className="text-muted-foreground text-sm">Pilih rentang angka (Level) untuk melatih refleks memori.</p>
+              <p className="text-muted-foreground text-sm">Sesuaikan level dan kecepatan untuk melatih refleks memori.</p>
             </div>
 
+            {/* Level Configuration */}
             <div className="space-y-4">
               <div className="flex justify-between items-center px-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Konfigurasi Level</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">1. Pilih Level Angka</p>
                 <div className="flex gap-2">
                   <Button 
                     variant="ghost" 
@@ -206,13 +216,35 @@ export function BlitzQuiz() {
               </div>
             </div>
 
+            {/* Speed Configuration */}
+            <div className="space-y-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground text-left px-2">2. Kecepatan Refleks</p>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {SPEEDS.map((s) => (
+                  <Button
+                    key={s.value}
+                    variant="outline"
+                    className={cn(
+                      "h-12 text-[10px] font-bold uppercase border-2",
+                      duration === s.value
+                        ? "bg-secondary text-black border-secondary shadow-[0_0_10px_rgba(245,158,11,0.3)]"
+                        : "border-secondary/10 text-muted-foreground hover:border-secondary/40"
+                    )}
+                    onClick={() => setDuration(s.value)}
+                  >
+                    {s.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             <Button 
               size="lg" 
               className="w-full h-16 text-xl font-bold rounded-xl shadow-2xl" 
               onClick={generateQuiz}
               disabled={selectedLevels.length === 0}
             >
-              {selectedLevels.length === 0 ? "PILIH LEVEL DULU" : `MULAI BLITZ (${selectedLevels.length} Level)`}
+              {selectedLevels.length === 0 ? "PILIH LEVEL DULU" : `MULAI BLITZ`}
             </Button>
           </motion.div>
         )}
@@ -244,7 +276,7 @@ export function BlitzQuiz() {
               </div>
             </div>
 
-            <Progress value={(timeLeft / 5) * 100} className="h-2 bg-muted overflow-hidden">
+            <Progress value={(timeLeft / duration) * 100} className="h-2 bg-muted overflow-hidden">
                <div className="h-full bg-primary" />
             </Progress>
 
