@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -8,7 +9,7 @@ import { BlitzQuiz } from '@/components/pao/BlitzQuiz';
 import { NeuralProgress } from '@/components/pao/NeuralProgress';
 import { usePAOStore } from '@/hooks/use-pao-store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Zap, BarChart3, ChevronLeft, ChevronRight, Binary } from 'lucide-react';
+import { BookOpen, Zap, BarChart3, ChevronLeft, ChevronRight, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -18,129 +19,125 @@ export default function MasterPAOPage() {
 
   const currentEntry = PAO_DATABASE[learningIndex];
   const currentStrength = neuralStrength[currentEntry.number]?.strength || 0;
+  
+  const activatedCount = Object.keys(neuralStrength).length;
+  const avgSync = activatedCount > 0 
+    ? Math.round(Object.values(neuralStrength).reduce((a, b) => a + b.strength, 0) / activatedCount) 
+    : 0;
 
   return (
-    <main className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-12">
-        {/* Header */}
-        <header className="flex flex-col md:flex-row justify-between items-center gap-6">
+    <main className="min-h-screen bg-background text-foreground p-4 md:p-12">
+      <div className="max-w-5xl mx-auto space-y-12">
+        {/* Simplified Header */}
+        <header className="flex flex-col md:flex-row justify-between items-center gap-8 py-4">
           <div className="text-center md:text-left">
-            <h1 className="text-5xl md:text-6xl font-black font-headline text-primary italic neon-glow tracking-tighter">
+            <h1 className="text-4xl md:text-5xl font-black font-headline text-primary neon-glow tracking-tighter italic">
               MASTER PAO
             </h1>
-            <p className="text-muted-foreground font-medium tracking-widest uppercase text-xs mt-2">
-              Laboratorium Memori Masa Depan <span className="text-secondary mx-2">|</span> 00-99 Level Insting
+            <p className="text-[10px] text-muted-foreground font-bold tracking-[0.5em] uppercase mt-1">
+              Neural Memory Laboratory
             </p>
           </div>
-          <div className="flex gap-4 p-4 metallic-glass rounded-2xl border-primary/10">
-            <div className="text-center px-4 border-r border-border">
-              <span className="block text-2xl font-black text-primary font-headline">
-                {Object.keys(neuralStrength).length}
-              </span>
-              <span className="text-[10px] uppercase text-muted-foreground font-bold">Teraktivasi</span>
+          
+          <div className="flex gap-8 items-center bg-muted/20 px-8 py-4 rounded-2xl border border-border/50">
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground font-bold uppercase mb-1">Active</p>
+              <p className="text-2xl font-black text-primary font-headline">{activatedCount}/100</p>
             </div>
-            <div className="text-center px-4">
-              <span className="block text-2xl font-black text-secondary font-headline">
-                {Math.round(Object.values(neuralStrength).reduce((a, b) => a + b.strength, 0) / 100)}%
-              </span>
-              <span className="text-[10px] uppercase text-muted-foreground font-bold">Neural Sync</span>
+            <div className="w-px h-8 bg-border" />
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground font-bold uppercase mb-1">Sync</p>
+              <p className="text-2xl font-black text-secondary font-headline">{avgSync}%</p>
             </div>
           </div>
         </header>
 
-        {/* Navigation Tabs */}
         <Tabs defaultValue="learn" className="w-full">
-          <div className="flex justify-center mb-8">
-            <TabsList className="bg-muted/30 border border-primary/20 h-14 p-1 rounded-xl">
-              <TabsTrigger value="learn" className="data-[state=active]:bg-primary data-[state=active]:text-black h-full px-8 rounded-lg gap-2 font-bold">
-                <BookOpen className="w-4 h-4" /> Mode Belajar
+          <div className="flex justify-center mb-12">
+            <TabsList className="bg-muted/40 h-12 p-1 rounded-xl border border-border/50">
+              <TabsTrigger value="learn" className="rounded-lg px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
+                <BookOpen className="w-4 h-4" /> Learn
               </TabsTrigger>
-              <TabsTrigger value="quiz" className="data-[state=active]:bg-primary data-[state=active]:text-black h-full px-8 rounded-lg gap-2 font-bold">
-                <Zap className="w-4 h-4" /> The Blitz Quiz
+              <TabsTrigger value="quiz" className="rounded-lg px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
+                <Zap className="w-4 h-4" /> Blitz
               </TabsTrigger>
-              <TabsTrigger value="stats" className="data-[state=active]:bg-primary data-[state=active]:text-black h-full px-8 rounded-lg gap-2 font-bold">
-                <BarChart3 className="w-4 h-4" /> Neural Progress
+              <TabsTrigger value="stats" className="rounded-lg px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
+                <BarChart3 className="w-4 h-4" /> Stats
               </TabsTrigger>
             </TabsList>
           </div>
 
-          {/* Learn Content */}
-          <TabsContent value="learn" className="outline-none">
-            <div className="flex flex-col items-center gap-8 py-8">
-              <div className="flex items-center gap-4 w-full max-w-lg justify-between">
+          <TabsContent value="learn" className="outline-none space-y-12">
+            <div className="flex flex-col items-center gap-10">
+              {/* Simple Navigation */}
+              <div className="flex items-center gap-6">
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size="icon" 
-                  className="rounded-full h-12 w-12 border-primary/20"
+                  className="rounded-full w-12 h-12 hover:bg-primary/10"
                   onClick={() => setLearningIndex(prev => (prev === 0 ? 99 : prev - 1))}
                 >
-                  <ChevronLeft />
+                  <ChevronLeft className="w-6 h-6" />
                 </Button>
                 
-                <div className="flex items-center gap-2">
-                  <Binary className="w-5 h-5 text-primary" />
-                  <span className="text-xl font-headline font-bold text-foreground">
-                    NAVIGASI NEURAL
-                  </span>
+                <div className="flex items-center gap-2 px-6 py-2 bg-muted/30 rounded-full border border-border/50">
+                  <Hash className="w-4 h-4 text-primary" />
+                  <span className="text-lg font-black font-headline tracking-widest">{currentEntry.number}</span>
                 </div>
 
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size="icon" 
-                  className="rounded-full h-12 w-12 border-primary/20"
+                  className="rounded-full w-12 h-12 hover:bg-primary/10"
                   onClick={() => setLearningIndex(prev => (prev === 99 ? 0 : prev + 1))}
                 >
-                  <ChevronRight />
+                  <ChevronRight className="w-6 h-6" />
                 </Button>
               </div>
 
               <motion.div
                 key={learningIndex}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className="w-full"
               >
                 <Flashcard entry={currentEntry} strength={currentStrength} />
               </motion.div>
 
-              <div className="flex flex-wrap justify-center gap-2 max-w-2xl">
-                {PAO_DATABASE.slice(
-                  Math.max(0, learningIndex - 5),
-                  Math.min(100, learningIndex + 6)
-                ).map((entry, idx) => (
-                   <button
+              {/* Minimal Grid */}
+              <div className="flex flex-wrap justify-center gap-2 max-w-3xl px-4">
+                {PAO_DATABASE.slice(Math.max(0, learningIndex - 10), Math.min(100, learningIndex + 11)).map((entry) => (
+                  <button
                     key={entry.number}
-                    className={cn(
-                      "w-10 h-10 rounded-lg font-headline font-bold text-sm transition-all",
-                      learningIndex === PAO_DATABASE.indexOf(entry) 
-                        ? "bg-primary text-black scale-110 shadow-[0_0_15px_rgba(222,255,154,0.5)]" 
-                        : "bg-muted/20 text-muted-foreground hover:bg-muted/40"
-                    )}
                     onClick={() => setLearningIndex(PAO_DATABASE.indexOf(entry))}
-                   >
-                     {entry.number}
-                   </button>
+                    className={cn(
+                      "w-9 h-9 rounded-md text-xs font-black font-headline transition-all",
+                      learningIndex === PAO_DATABASE.indexOf(entry)
+                        ? "bg-primary text-black shadow-lg scale-110"
+                        : "bg-muted/10 text-muted-foreground hover:bg-muted/30"
+                    )}
+                  >
+                    {entry.number}
+                  </button>
                 ))}
               </div>
             </div>
           </TabsContent>
 
-          {/* Quiz Content */}
-          <TabsContent value="quiz" className="outline-none">
+          <TabsContent value="quiz">
             <BlitzQuiz />
           </TabsContent>
 
-          {/* Stats Content */}
-          <TabsContent value="stats" className="outline-none">
-             <div className="max-w-4xl mx-auto py-8">
-                <NeuralProgress />
-             </div>
+          <TabsContent value="stats">
+            <div className="max-w-4xl mx-auto py-4">
+              <NeuralProgress />
+            </div>
           </TabsContent>
         </Tabs>
 
-        {/* Footer info */}
-        <footer className="pt-12 border-t border-border/50 text-center text-xs text-muted-foreground font-bold tracking-widest uppercase">
-          Master PAO System &copy; 2024 <span className="mx-2">|</span> Designed for High-Performance Cognition
+        <footer className="pt-24 pb-8 text-center text-[10px] text-muted-foreground font-bold tracking-[0.3em] uppercase opacity-30">
+          Master PAO System &bull; High Performance Cognition
         </footer>
       </div>
     </main>
