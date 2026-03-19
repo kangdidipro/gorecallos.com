@@ -7,13 +7,30 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
-import { Brain, Timer, RotateCcw, CheckCircle2, XCircle, Play, Eye, X } from 'lucide-react';
+import { 
+  Brain, Timer, RotateCcw, CheckCircle2, XCircle, Play, Eye, X,
+  ShieldCheck, Trophy, Globe, Briefcase, Users, Moon, Flame, Landmark, Mic, Scroll 
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type TestState = 'START' | 'MEMORIZING' | 'RECALLING' | 'RESULT';
 
+const LEVEL_CONFIG: Record<number, { theme: string; icon: any }> = {
+  1: { theme: "Karakter & Hero", icon: ShieldCheck },
+  2: { theme: "Sport & Sepakbola", icon: Trophy },
+  3: { theme: "Budaya & Sejarah", icon: Globe },
+  4: { theme: "Religi & Profesi", icon: Briefcase },
+  5: { theme: "Tokoh & Dunia", icon: Users },
+  6: { theme: "Sejarah Islam", icon: Moon },
+  7: { theme: "Modern & Krisis", icon: Flame },
+  8: { theme: "Politik Dunia", icon: Landmark },
+  9: { theme: "Tragedi & Idola", icon: Mic },
+  10: { theme: "Reformasi & Era", icon: Scroll },
+};
+
 export function MemoryTest() {
   const [state, setState] = useState<TestState>('START');
+  const [selectedLevels, setSelectedLevels] = useState<number[]>([1]);
   const [itemCount, setItemCount] = useState(5);
   const [displayTime, setDisplayTime] = useState(3); // seconds per number
   const [numbers, setNumbers] = useState<string[]>([]);
@@ -22,10 +39,31 @@ export function MemoryTest() {
   const [userInputs, setUserInputs] = useState<string[]>([]);
   const [score, setScore] = useState(0);
 
-  const startTest = () => {
-    const generated = Array.from({ length: itemCount }).map(() => 
-      Math.floor(Math.random() * 100).toString().padStart(2, '0')
+  const toggleLevel = (lvl: number) => {
+    setSelectedLevels(prev => 
+      prev.includes(lvl) 
+        ? prev.filter(l => l !== lvl)
+        : [...prev, lvl].sort((a, b) => a - b)
     );
+  };
+
+  const selectAll = () => setSelectedLevels([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  const unselectAll = () => setSelectedLevels([]);
+
+  const startTest = () => {
+    if (selectedLevels.length === 0) return;
+
+    let pool: string[] = [];
+    selectedLevels.forEach(lvl => {
+      for (let i = (lvl - 1) * 10; i < lvl * 10; i++) {
+        pool.push(i.toString().padStart(2, '0'));
+      }
+    });
+
+    const generated = Array.from({ length: itemCount }).map(() => 
+      pool[Math.floor(Math.random() * pool.length)]
+    );
+    
     setNumbers(generated);
     setUserInputs(new Array(itemCount).fill(''));
     setCurrentIndex(0);
@@ -84,10 +122,42 @@ export function MemoryTest() {
               <p className="text-muted-foreground text-sm italic">Uji kapasitas penyimpanan data otak Anda.</p>
             </div>
 
+            {/* Level Selection Section */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center px-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground text-left">1. Pilih Level Angka</p>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" className="text-[10px] font-bold uppercase text-primary h-auto p-1" onClick={selectAll}>Semua</Button>
+                  <Button variant="ghost" size="sm" className="text-[10px] font-bold uppercase text-destructive h-auto p-1" onClick={unselectAll}>Hapus</Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => {
+                  const Config = LEVEL_CONFIG[l];
+                  const Icon = Config.icon;
+                  return (
+                    <Button 
+                      key={l}
+                      variant="outline"
+                      className={cn(
+                        "h-20 flex flex-col items-center justify-center border-2 transition-all p-1 gap-0.5 group relative overflow-hidden",
+                        selectedLevels.includes(l) ? "bg-primary text-black border-primary" : "border-primary/10 text-muted-foreground hover:border-primary/30"
+                      )}
+                      onClick={() => toggleLevel(l)}
+                    >
+                      <Icon className={cn("w-4 h-4 mb-0.5 transition-transform group-hover:scale-110", selectedLevels.includes(l) ? "text-black" : "text-primary/40")} />
+                      <span className="text-[8px] font-black font-headline uppercase opacity-60 leading-none">LV {l}</span>
+                      <span className="text-[9px] font-black text-center leading-tight line-clamp-2 px-1 h-6 flex items-center justify-center">{Config.theme}</span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="space-y-6 bg-muted/10 p-6 rounded-xl border border-border/50">
               <div className="space-y-4">
                 <div className="flex justify-between items-center px-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Jumlah Angka</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">2. Jumlah Angka</Label>
                   <span className="text-primary font-black font-headline text-lg">{itemCount}</span>
                 </div>
                 <input 
@@ -107,7 +177,7 @@ export function MemoryTest() {
 
               <div className="space-y-4">
                 <div className="flex justify-between items-center px-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Durasi Per Angka</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">3. Durasi Per Angka</Label>
                   <span className="text-secondary font-black font-headline text-lg">{displayTime}s</span>
                 </div>
                 <input 
@@ -125,8 +195,13 @@ export function MemoryTest() {
               </div>
             </div>
 
-            <Button size="lg" className="w-full h-16 text-xl font-bold rounded-xl shadow-2xl gap-3" onClick={startTest}>
-              <Play className="w-6 h-6" /> INITIATE TEST
+            <Button 
+              size="lg" 
+              className="w-full h-16 text-xl font-bold rounded-xl shadow-2xl gap-3" 
+              onClick={startTest}
+              disabled={selectedLevels.length === 0}
+            >
+              <Play className="w-6 h-6" /> {selectedLevels.length === 0 ? "PILIH LEVEL" : "INITIATE TEST"}
             </Button>
           </motion.div>
         )}
