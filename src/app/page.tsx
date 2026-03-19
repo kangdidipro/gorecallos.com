@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -8,9 +7,10 @@ import { Flashcard } from '@/components/pao/Flashcard';
 import { BlitzQuiz } from '@/components/pao/BlitzQuiz';
 import { MemoryTest } from '@/components/pao/MemoryTest';
 import { NeuralProgress } from '@/components/pao/NeuralProgress';
+import { PAOTable } from '@/components/pao/PAOTable';
 import { usePAOStore } from '@/hooks/use-pao-store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Zap, BarChart3, Brain, Info } from 'lucide-react';
+import { BookOpen, Zap, BarChart3, Brain, Info, Table as TableIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TAB_INFO = {
@@ -18,6 +18,11 @@ const TAB_INFO = {
     title: "Neural Encoding (Learn)",
     description: "Fase pengenalan untuk membangun asosiasi antara angka dan Person-Action-Object (PAO).",
     howTo: "Gunakan kartu flash untuk menghafal visualisasi. Klik kartu untuk melihat detail, dan gunakan navigasi untuk berpindah angka."
+  },
+  table: {
+    title: "Reference Matrix (Table)",
+    description: "Tampilan tabel lengkap untuk meninjau seluruh database PAO 00-99 secara cepat.",
+    howTo: "Gunakan fitur pencarian untuk menemukan angka atau kata kunci tertentu. Cocok untuk meninjau sistem sebelum latihan."
   },
   quiz: {
     title: "Reflex Response (Blitz)",
@@ -83,17 +88,20 @@ export default function MasterPAOPage() {
 
         <Tabs defaultValue="learn" onValueChange={setActiveTab} className="w-full">
           <div className="flex flex-col items-center gap-6 mb-12">
-            <TabsList className="bg-muted/40 h-12 p-1 rounded-xl border border-border/50">
-              <TabsTrigger value="learn" className="rounded-lg px-6 md:px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
+            <TabsList className="bg-muted/40 h-12 p-1 rounded-xl border border-border/50 flex-wrap justify-center overflow-visible">
+              <TabsTrigger value="learn" className="rounded-lg px-4 md:px-6 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
                 <BookOpen className="w-4 h-4" /> Learn
               </TabsTrigger>
-              <TabsTrigger value="quiz" className="rounded-lg px-6 md:px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
+              <TabsTrigger value="table" className="rounded-lg px-4 md:px-6 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
+                <TableIcon className="w-4 h-4" /> Table
+              </TabsTrigger>
+              <TabsTrigger value="quiz" className="rounded-lg px-4 md:px-6 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
                 <Zap className="w-4 h-4" /> Blitz
               </TabsTrigger>
-              <TabsTrigger value="test" className="rounded-lg px-6 md:px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
+              <TabsTrigger value="test" className="rounded-lg px-4 md:px-6 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
                 <Brain className="w-4 h-4" /> Test
               </TabsTrigger>
-              <TabsTrigger value="stats" className="rounded-lg px-6 md:px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
+              <TabsTrigger value="stats" className="rounded-lg px-4 md:px-6 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
                 <BarChart3 className="w-4 h-4" /> Stats
               </TabsTrigger>
             </TabsList>
@@ -165,6 +173,10 @@ export default function MasterPAOPage() {
                 ))}
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="table">
+            <PAOTable />
           </TabsContent>
 
           <TabsContent value="quiz">
