@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PAO_DATABASE, PAOEntry } from '@/lib/pao-data';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { usePAOStore } from '@/hooks/use-pao-store';
-import { CheckCircle2, XCircle, Timer, Trophy } from 'lucide-react';
+import { Timer, Trophy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -21,8 +21,10 @@ export function BlitzQuiz() {
   const [level, setLevel] = useState<QuizLevel>(1);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(10);
+  const [timeLeft, setTimeLeft] = useState(5);
   const [questions, setQuestions] = useState<{ entry: PAOEntry; options: string[]; type: 'person' | 'action' | 'object' }[]>([]);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
 
   const playCorrectSound = () => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'); 
@@ -65,22 +67,30 @@ export function BlitzQuiz() {
     setScore(0);
     setCurrentIndex(0);
     setTimeLeft(5);
+    setSelectedOption(null);
+    setIsChecking(false);
     setState('PLAYING');
   }, [level, neuralStrength]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (state === 'PLAYING' && timeLeft > 0) {
+    if (state === 'PLAYING' && timeLeft > 0 && !isChecking) {
       timer = setTimeout(() => setTimeLeft(prev => prev - 0.1), 100);
-    } else if (state === 'PLAYING' && timeLeft <= 0) {
+    } else if (state === 'PLAYING' && timeLeft <= 0 && !isChecking) {
       handleAnswer('');
     }
     return () => clearTimeout(timer);
-  }, [state, timeLeft]);
+  }, [state, timeLeft, isChecking]);
 
   const handleAnswer = (answer: string) => {
+    if (isChecking) return;
+
+    setIsChecking(true);
+    setSelectedOption(answer);
+
     const currentQ = questions[currentIndex];
-    const isCorrect = answer === currentQ.entry[currentQ.type];
+    const correctAns = currentQ.entry[currentQ.type];
+    const isCorrect = answer === correctAns;
 
     if (isCorrect) {
       setScore(prev => prev + 1);
@@ -88,19 +98,32 @@ export function BlitzQuiz() {
       updateStrength(currentQ.entry.number, true);
     } else {
       updateStrength(currentQ.entry.number, false);
-      toast({
-        title: "Salah!",
-        description: `Angka ${currentQ.entry.number} seharusnya: ${currentQ.entry[currentQ.type]}`,
-        variant: "destructive"
-      });
+      if (answer !== '') {
+        toast({
+          title: "Salah!",
+          description: `Angka ${currentQ.entry.number} seharusnya: ${correctAns}`,
+          variant: "destructive"
+        });
+      } else {
+         toast({
+          title: "Waktu Habis!",
+          description: `Angka ${currentQ.entry.number} adalah: ${correctAns}`,
+          variant: "destructive"
+        });
+      }
     }
 
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-      setTimeLeft(5);
-    } else {
-      setState('RESULT');
-    }
+    // Delay 1 detik agar pengguna bisa melihat feedback visual
+    setTimeout(() => {
+      if (currentIndex < questions.length - 1) {
+        setCurrentIndex(prev => prev + 1);
+        setTimeLeft(5);
+        setSelectedOption(null);
+        setIsChecking(false);
+      } else {
+        setState('RESULT');
+      }
+    }, 1000);
   };
 
   return (
@@ -172,16 +195,29 @@ export function BlitzQuiz() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {questions[currentIndex].options.map((option, idx) => (
-                <Button
-                  key={idx}
-                  variant="outline"
-                  className="h-16 text-lg border-2 border-primary/20 hover:border-primary hover:bg-primary/5 transition-all text-left px-6"
-                  onClick={() => handleAnswer(option)}
-                >
-                  {option}
-                </Button>
-              ))}
+              {questions[currentIndex].options.map((option, idx) => {
+                const isCorrect = option === questions[currentIndex].entry[questions[currentIndex].type];
+                const isSelected = option === selectedOption;
+                
+                return (
+                  <Button
+                    key={idx}
+                    variant="outline"
+                    disabled={isChecking}
+                    className={cn(
+                      "h-16 text-lg border-2 transition-all text-left px-6",
+                      !isChecking && "border-primary/20 hover:border-primary hover:bg-primary/5",
+                      // Feedback visual
+                      isChecking && isCorrect && "bg-primary/20 border-primary text-primary neon-glow",
+                      isChecking && isSelected && !isCorrect && "bg-destructive/20 border-destructive text-destructive",
+                      isChecking && !isSelected && !isCorrect && "opacity-30"
+                    )}
+                    onClick={() => handleAnswer(option)}
+                  >
+                    {option}
+                  </Button>
+                );
+              })}
             </div>
           </motion.div>
         )}
