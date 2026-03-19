@@ -7,7 +7,7 @@ import { PAO_DATABASE, PAOEntry } from '@/lib/pao-data';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { usePAOStore } from '@/hooks/use-pao-store';
-import { Timer, Trophy } from 'lucide-react';
+import { Timer, Trophy, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -101,7 +101,6 @@ export function BlitzQuiz() {
       updateStrength(currentQ.entry.number, false);
     }
 
-    // Memberikan jeda visual agar pengguna bisa melihat apakah jawabannya benar/salah
     setTimeout(() => {
       if (currentIndex < questions.length - 1) {
         setCurrentIndex(prev => prev + 1);
@@ -164,9 +163,20 @@ export function BlitzQuiz() {
           >
             <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest text-muted-foreground">
               <span>Pertanyaan {currentIndex + 1} / {questions.length}</span>
-              <span className="flex items-center gap-2 text-secondary">
-                <Timer className="w-4 h-4" /> {timeLeft.toFixed(1)}s
-              </span>
+              <div className="flex items-center gap-4">
+                <span className="flex items-center gap-2 text-secondary">
+                  <Timer className="w-4 h-4" /> {timeLeft.toFixed(1)}s
+                </span>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="w-8 h-8 rounded-full hover:bg-destructive/10 text-destructive"
+                  onClick={() => setState('START')}
+                  title="Berhenti"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
 
             <Progress value={(timeLeft / 5) * 100} className="h-2 bg-muted overflow-hidden">

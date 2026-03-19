@@ -21,12 +21,12 @@ export function Flashcard({ entry, strength, onNext, onPrev }: FlashcardProps) {
 
   return (
     <div className="relative w-full max-w-lg aspect-[4/5] mx-auto group">
-      {/* Navigation Overlays */}
-      <div className="absolute inset-y-0 -left-16 hidden md:flex items-center z-20">
+      {/* Navigation Overlays (Desktop - Inside Container) */}
+      <div className="absolute inset-y-0 left-2 hidden md:flex items-center z-20">
         <Button 
           variant="ghost" 
           size="icon" 
-          className="rounded-full w-12 h-12 hover:bg-primary/10 text-primary"
+          className="rounded-full w-12 h-12 bg-background/10 backdrop-blur-sm hover:bg-primary/20 text-primary"
           onClick={(e) => {
             e.stopPropagation();
             onPrev?.();
@@ -36,11 +36,11 @@ export function Flashcard({ entry, strength, onNext, onPrev }: FlashcardProps) {
         </Button>
       </div>
 
-      <div className="absolute inset-y-0 -right-16 hidden md:flex items-center z-20">
+      <div className="absolute inset-y-0 right-2 hidden md:flex items-center z-20">
         <Button 
           variant="ghost" 
           size="icon" 
-          className="rounded-full w-12 h-12 hover:bg-primary/10 text-primary"
+          className="rounded-full w-12 h-12 bg-background/10 backdrop-blur-sm hover:bg-primary/20 text-primary"
           onClick={(e) => {
             e.stopPropagation();
             onNext?.();
