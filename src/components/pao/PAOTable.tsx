@@ -60,7 +60,7 @@ export function PAOTable() {
 
   // Merge static data with custom data from Firestore
   const mergedData = PAO_DATABASE.map(staticEntry => {
-    const custom = customData?.find(c => c.id === staticEntry.number);
+    const custom = customData?.find(c => c.number === staticEntry.number);
     return custom ? { ...staticEntry, ...custom } : staticEntry;
   });
 
