@@ -70,13 +70,11 @@ export function Flashcard({ entry, strength, onNext, onPrev }: FlashcardProps) {
               Neural Sync: {strength}%
             </div>
             
-            <div className="relative">
+            <div className="flex flex-col items-center gap-6 mt-4">
               <div className="text-[12rem] font-black font-headline text-primary neon-glow leading-none select-none">
                 {entry.number}
               </div>
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 opacity-20">
-                <IconComponent className="w-24 h-24 text-primary" strokeWidth={1} />
-              </div>
+              <IconComponent className="w-20 h-20 text-primary/30 animate-pulse" strokeWidth={1} />
             </div>
 
             <div className="mt-auto text-muted-foreground/40 uppercase tracking-[0.4em] text-[10px] font-bold">
