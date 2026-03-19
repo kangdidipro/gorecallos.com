@@ -2,15 +2,14 @@
 "use client";
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { PAO_DATABASE } from '@/lib/pao-data';
 import { Flashcard } from '@/components/pao/Flashcard';
 import { BlitzQuiz } from '@/components/pao/BlitzQuiz';
 import { NeuralProgress } from '@/components/pao/NeuralProgress';
 import { usePAOStore } from '@/hooks/use-pao-store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Zap, BarChart3, ChevronLeft, ChevronRight, Hash } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { BookOpen, Zap, BarChart3, Hash } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function MasterPAOPage() {
@@ -25,10 +24,13 @@ export default function MasterPAOPage() {
     ? Math.round(Object.values(neuralStrength).reduce((a, b) => a + b.strength, 0) / activatedCount) 
     : 0;
 
+  const handleNext = () => setLearningIndex((prev) => (prev === 99 ? 0 : prev + 1));
+  const handlePrev = () => setLearningIndex((prev) => (prev === 0 ? 99 : prev - 1));
+
   return (
     <main className="min-h-screen bg-background text-foreground p-4 md:p-12">
       <div className="max-w-5xl mx-auto space-y-12">
-        {/* Simplified Header */}
+        {/* Optimized Header */}
         <header className="flex flex-col md:flex-row justify-between items-center gap-8 py-4">
           <div className="text-center md:text-left">
             <h1 className="text-4xl md:text-5xl font-black font-headline text-primary neon-glow tracking-tighter italic">
@@ -68,51 +70,34 @@ export default function MasterPAOPage() {
           </div>
 
           <TabsContent value="learn" className="outline-none space-y-12">
-            <div className="flex flex-col items-center gap-10">
-              {/* Simple Navigation */}
-              <div className="flex items-center gap-6">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="rounded-full w-12 h-12 hover:bg-primary/10"
-                  onClick={() => setLearningIndex(prev => (prev === 0 ? 99 : prev - 1))}
-                >
-                  <ChevronLeft className="w-6 h-6" />
-                </Button>
-                
-                <div className="flex items-center gap-2 px-6 py-2 bg-muted/30 rounded-full border border-border/50">
-                  <Hash className="w-4 h-4 text-primary" />
-                  <span className="text-lg font-black font-headline tracking-widest">{currentEntry.number}</span>
-                </div>
-
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="rounded-full w-12 h-12 hover:bg-primary/10"
-                  onClick={() => setLearningIndex(prev => (prev === 99 ? 0 : prev + 1))}
-                >
-                  <ChevronRight className="w-6 h-6" />
-                </Button>
+            <div className="flex flex-col items-center gap-12">
+              <div className="relative w-full">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={learningIndex}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Flashcard 
+                      entry={currentEntry} 
+                      strength={currentStrength} 
+                      onNext={handleNext}
+                      onPrev={handlePrev}
+                    />
+                  </motion.div>
+                </AnimatePresence>
               </div>
 
-              <motion.div
-                key={learningIndex}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-                className="w-full"
-              >
-                <Flashcard entry={currentEntry} strength={currentStrength} />
-              </motion.div>
-
-              {/* Minimal Grid */}
-              <div className="flex flex-wrap justify-center gap-2 max-w-3xl px-4">
-                {PAO_DATABASE.slice(Math.max(0, learningIndex - 10), Math.min(100, learningIndex + 11)).map((entry) => (
+              {/* Quick Jump Grid */}
+              <div className="flex flex-wrap justify-center gap-1.5 max-w-2xl px-4">
+                {PAO_DATABASE.slice(Math.max(0, learningIndex - 5), Math.min(100, learningIndex + 6)).map((entry) => (
                   <button
                     key={entry.number}
                     onClick={() => setLearningIndex(PAO_DATABASE.indexOf(entry))}
                     className={cn(
-                      "w-9 h-9 rounded-md text-xs font-black font-headline transition-all",
+                      "w-8 h-8 rounded-md text-[10px] font-black font-headline transition-all",
                       learningIndex === PAO_DATABASE.indexOf(entry)
                         ? "bg-primary text-black shadow-lg scale-110"
                         : "bg-muted/10 text-muted-foreground hover:bg-muted/30"
