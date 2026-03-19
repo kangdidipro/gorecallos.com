@@ -7,9 +7,12 @@ import { PAO_DATABASE, PAOEntry } from '@/lib/pao-data';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { usePAOStore } from '@/hooks/use-pao-store';
-import { Timer, X, CheckCircle2, AlertCircle, Zap } from 'lucide-react';
+import { Timer, X, CheckCircle2, AlertCircle, Zap, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 
 type QuizState = 'START' | 'PLAYING' | 'RESULT';
 
@@ -44,6 +47,7 @@ export function BlitzQuiz() {
   const [duration, setDuration] = useState(5);
   const [questionCount, setQuestionCount] = useState(10);
   const [customCount, setCustomCount] = useState("");
+  const [focusUnmastered, setFocusUnmastered] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(5);
@@ -59,26 +63,11 @@ export function BlitzQuiz() {
     );
   };
 
-  const selectAll = () => {
-    setSelectedLevels([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-  };
-
-  const unselectAll = () => {
-    setSelectedLevels([]);
-  };
-
-  const playCorrectSound = () => {
-    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'); 
-    audio.play().catch(() => {});
-  };
+  const selectAll = () => setSelectedLevels([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  const unselectAll = () => setSelectedLevels([]);
 
   const generateQuiz = useCallback(() => {
     if (selectedLevels.length === 0) return;
-
-    let finalCount = questionCount;
-    if (customCount && !isNaN(parseInt(customCount))) {
-      finalCount = Math.max(1, parseInt(customCount));
-    }
 
     let pool: PAOEntry[] = [];
     selectedLevels.forEach(lvl => {
@@ -87,18 +76,35 @@ export function BlitzQuiz() {
       pool = [...pool, ...PAO_DATABASE.slice(start, end)];
     });
 
-    const weightedPool = [...pool];
-    Object.keys(neuralStrength).forEach(numStr => {
-      const stats = neuralStrength[numStr];
-      if (stats.strength < 50) {
-        const entry = pool.find(e => e.number === numStr);
-        if (entry) weightedPool.push(entry, entry);
+    // Neural Focus Logic: Filter only unmastered (< 100%)
+    if (focusUnmastered) {
+      pool = pool.filter(entry => {
+        const stats = neuralStrength[entry.number];
+        return !stats || stats.strength < 100;
+      });
+
+      if (pool.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Level Selesai!",
+          description: "Semua angka di level ini sudah mencapai 100% Neural Sync.",
+        });
+        return;
       }
-    });
+    }
 
-    const selectedEntries = Array.from({ length: finalCount }).map(() => weightedPool[Math.floor(Math.random() * weightedPool.length)]);
+    let finalCount = questionCount;
+    if (customCount && !isNaN(parseInt(customCount))) {
+      finalCount = Math.max(1, parseInt(customCount));
+    }
+    
+    // Limit to pool size if focused
+    if (focusUnmastered) {
+      finalCount = Math.min(finalCount, pool.length);
+    }
 
-    const quizQuestions = selectedEntries.map((entry) => {
+    const quizQuestions = Array.from({ length: finalCount }).map(() => {
+      const entry = pool[Math.floor(Math.random() * pool.length)];
       const types: ('person' | 'action' | 'object')[] = ['person', 'action', 'object'];
       const type = types[Math.floor(Math.random() * types.length)];
 
@@ -117,7 +123,7 @@ export function BlitzQuiz() {
     setSelectedOption(null);
     setIsChecking(false);
     setState('PLAYING');
-  }, [selectedLevels, neuralStrength, duration, questionCount, customCount]);
+  }, [selectedLevels, neuralStrength, duration, questionCount, customCount, focusUnmastered]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -131,7 +137,6 @@ export function BlitzQuiz() {
 
   const handleAnswer = (answer: string) => {
     if (isChecking) return;
-
     setIsChecking(true);
     setSelectedOption(answer);
 
@@ -141,7 +146,6 @@ export function BlitzQuiz() {
 
     if (isCorrect) {
       setScore(prev => prev + 1);
-      playCorrectSound();
       updateStrength(currentQ.entry.number, true);
     } else {
       updateStrength(currentQ.entry.number, false);
@@ -180,50 +184,39 @@ export function BlitzQuiz() {
               <div className="flex justify-between items-center px-2">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">1. Pilih Level Angka</p>
                 <div className="flex gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-[10px] font-bold uppercase text-primary hover:text-primary/80 h-auto p-1"
-                    onClick={selectAll}
-                  >
-                    Pilih Semua
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-[10px] font-bold uppercase text-destructive hover:text-destructive/80 h-auto p-1"
-                    onClick={unselectAll}
-                  >
-                    Hapus Semua
-                  </Button>
+                  <Button variant="ghost" size="sm" className="text-[10px] font-bold uppercase text-primary h-auto p-1" onClick={selectAll}>Pilih Semua</Button>
+                  <Button variant="ghost" size="sm" className="text-[10px] font-bold uppercase text-destructive h-auto p-1" onClick={unselectAll}>Hapus Semua</Button>
                 </div>
               </div>
-              
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => {
-                  const isSelected = selectedLevels.includes(l);
-                  const rangeStart = (l - 1) * 10;
-                  const rangeEnd = rangeStart + 9;
-                  
-                  return (
-                    <Button 
-                      key={l}
-                      variant="outline"
-                      className={cn(
-                        "h-24 flex flex-col items-center justify-center border-2 transition-all p-2 gap-1",
-                        isSelected 
-                          ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(222,255,154,0.3)]" 
-                          : "border-primary/10 text-muted-foreground hover:border-primary/40"
-                      )}
-                      onClick={() => toggleLevel(l)}
-                    >
-                      <span className="text-[10px] font-black font-headline uppercase opacity-60">LV {l}</span>
-                      <span className="text-[11px] font-black text-center leading-tight">{LEVEL_THEMES[l]}</span>
-                      <span className="text-[9px] opacity-60 font-bold mt-auto">{rangeStart.toString().padStart(2, '0')}-{rangeEnd.toString().padStart(2, '0')}</span>
-                    </Button>
-                  );
-                })}
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => (
+                  <Button 
+                    key={l}
+                    variant="outline"
+                    className={cn(
+                      "h-24 flex flex-col items-center justify-center border-2 transition-all p-2 gap-1",
+                      selectedLevels.includes(l) ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(222,255,154,0.3)]" : "border-primary/10 text-muted-foreground"
+                    )}
+                    onClick={() => toggleLevel(l)}
+                  >
+                    <span className="text-[10px] font-black font-headline uppercase opacity-60">LV {l}</span>
+                    <span className="text-[11px] font-black text-center leading-tight">{LEVEL_THEMES[l]}</span>
+                    <span className="text-[9px] opacity-60 font-bold mt-auto">{(l-1)*10}-{l*10-1}</span>
+                  </Button>
+                ))}
               </div>
+            </div>
+
+            {/* Special Feature: Neural Focus */}
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <BrainCircuit className="w-6 h-6 text-primary" />
+                <div className="text-left">
+                  <Label htmlFor="neural-focus" className="text-sm font-bold block">Fokus Neural</Label>
+                  <p className="text-[10px] text-muted-foreground">Hanya latih angka yang belum 100%.</p>
+                </div>
+              </div>
+              <Switch id="neural-focus" checked={focusUnmastered} onCheckedChange={setFocusUnmastered} />
             </div>
 
             {/* Speed Configuration */}
@@ -236,9 +229,7 @@ export function BlitzQuiz() {
                     variant="outline"
                     className={cn(
                       "h-12 text-[10px] font-bold uppercase border-2",
-                      duration === s.value
-                        ? "bg-secondary text-black border-secondary shadow-[0_0_10px_rgba(245,158,11,0.3)]"
-                        : "border-secondary/10 text-muted-foreground hover:border-secondary/40"
+                      duration === s.value ? "bg-secondary text-black border-secondary" : "border-secondary/10 text-muted-foreground"
                     )}
                     onClick={() => setDuration(s.value)}
                   >
@@ -259,102 +250,58 @@ export function BlitzQuiz() {
                       variant="outline"
                       className={cn(
                         "h-10 text-[11px] font-bold border-2",
-                        questionCount === count && !customCount
-                          ? "bg-primary text-black border-primary"
-                          : "border-primary/10 text-muted-foreground"
+                        questionCount === count && !customCount ? "bg-primary text-black border-primary" : "border-primary/10 text-muted-foreground"
                       )}
-                      onClick={() => {
-                        setQuestionCount(count);
-                        setCustomCount("");
-                      }}
+                      onClick={() => { setQuestionCount(count); setCustomCount(""); }}
                     >
                       {count}
                     </Button>
                   ))}
                 </div>
-                <div className="relative">
-                  <Input 
-                    type="number"
-                    placeholder="Masukkan jumlah kustom..."
-                    className="bg-muted/20 border-border/50 text-center h-12 font-bold"
-                    value={customCount}
-                    onChange={(e) => {
-                      setCustomCount(e.target.value);
-                      setQuestionCount(0); // Mark custom as active
-                    }}
-                  />
-                  {customCount && (
-                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary uppercase">Kustom</div>
-                  )}
-                </div>
+                <Input 
+                  type="number"
+                  placeholder="Masukkan jumlah kustom..."
+                  className="bg-muted/20 border-border/50 text-center h-12 font-bold"
+                  value={customCount}
+                  onChange={(e) => { setCustomCount(e.target.value); setQuestionCount(0); }}
+                />
               </div>
             </div>
 
-            <Button 
-              size="lg" 
-              className="w-full h-16 text-xl font-bold rounded-xl shadow-2xl" 
-              onClick={generateQuiz}
-              disabled={selectedLevels.length === 0}
-            >
+            <Button size="lg" className="w-full h-16 text-xl font-bold rounded-xl shadow-2xl" onClick={generateQuiz} disabled={selectedLevels.length === 0}>
               {selectedLevels.length === 0 ? "PILIH LEVEL DULU" : `MULAI BLITZ`}
             </Button>
           </motion.div>
         )}
 
         {state === 'PLAYING' && (
-          <motion.div 
-            key="playing"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="space-y-8"
-          >
+          <motion.div key="playing" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8">
             <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest text-muted-foreground">
               <span>Q {currentIndex + 1} / {questions.length}</span>
               <div className="flex items-center gap-4">
-                <span className={cn(
-                  "flex items-center gap-2 transition-colors",
-                  timeLeft < 2 ? "text-destructive animate-pulse" : "text-secondary"
-                )}>
+                <span className={cn("flex items-center gap-2", timeLeft < 2 ? "text-destructive animate-pulse" : "text-secondary")}>
                   <Timer className="w-4 h-4" /> {timeLeft.toFixed(1)}s
                 </span>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="w-8 h-8 rounded-full hover:bg-destructive/10 text-destructive"
-                  onClick={() => setState('START')}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+                <Button variant="ghost" size="icon" className="w-8 h-8 text-destructive" onClick={() => setState('START')}><X className="w-4 h-4" /></Button>
               </div>
             </div>
-
-            <Progress value={(timeLeft / duration) * 100} className="h-2 bg-muted overflow-hidden">
-               <div className="h-full bg-primary" />
-            </Progress>
-
+            <Progress value={(timeLeft / duration) * 100} className="h-2 bg-muted" />
             <div className="text-center py-8">
-              <div className="text-8xl font-black font-headline text-primary neon-glow mb-4">
-                {questions[currentIndex].entry.number}
-              </div>
-              <div className="text-xl font-medium text-secondary italic">
-                Siapakah {questions[currentIndex].type === 'person' ? 'Tokohnya' : questions[currentIndex].type === 'action' ? 'Aksinya' : 'Bendanya'}?
-              </div>
+              <div className="text-8xl font-black font-headline text-primary neon-glow mb-4">{questions[currentIndex].entry.number}</div>
+              <div className="text-xl font-medium text-secondary italic">Siapakah {questions[currentIndex].type === 'person' ? 'Tokohnya' : questions[currentIndex].type === 'action' ? 'Aksinya' : 'Bendanya'}?</div>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {questions[currentIndex].options.map((option, idx) => {
                 const isCorrect = option === questions[currentIndex].entry[questions[currentIndex].type];
                 const isSelected = option === selectedOption;
-                
                 return (
                   <Button
                     key={idx}
                     variant="outline"
                     disabled={isChecking}
                     className={cn(
-                      "h-16 text-lg border-2 transition-all text-left px-6 whitespace-normal",
-                      !isChecking && "border-primary/20 hover:border-primary hover:bg-primary/5",
-                      isChecking && isCorrect && "bg-primary/20 border-primary text-primary neon-glow shadow-[0_0_10px_rgba(222,255,154,0.5)]",
+                      "h-16 text-lg border-2 transition-all",
+                      isChecking && isCorrect && "bg-primary/20 border-primary text-primary neon-glow",
                       isChecking && isSelected && !isCorrect && "bg-destructive/20 border-destructive text-destructive",
                       isChecking && !isSelected && !isCorrect && "opacity-30"
                     )}
@@ -369,34 +316,15 @@ export function BlitzQuiz() {
         )}
 
         {state === 'RESULT' && (
-          <motion.div 
-            key="result"
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center space-y-8 py-12"
-          >
+          <motion.div key="result" initial={{ opacity: 0, scale: 1.1 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-8 py-12">
             <div className="relative inline-block">
-              {score > (questions.length * 0.7) ? (
-                <CheckCircle2 className="w-24 h-24 text-primary mx-auto mb-4" />
-              ) : (
-                <AlertCircle className="w-24 h-24 text-secondary mx-auto mb-4" />
-              )}
-              <div className="absolute inset-0 blur-3xl bg-primary/10 rounded-full" />
+              {score > (questions.length * 0.7) ? <CheckCircle2 className="w-24 h-24 text-primary mx-auto mb-4" /> : <AlertCircle className="w-24 h-24 text-secondary mx-auto mb-4" />}
             </div>
-            
             <div className="space-y-2">
-              <h2 className="text-3xl font-bold text-foreground">Sesi Selesai!</h2>
-              <div className="text-6xl font-black text-primary font-headline">
-                {score} / {questions.length}
-              </div>
-              <p className="text-muted-foreground px-8">
-                {score === questions.length ? "Luar biasa! Koneksi neural Anda sempurna." : "Terus berlatih untuk mengasah kecepatan recall Anda."}
-              </p>
+              <h2 className="text-3xl font-bold">Sesi Selesai!</h2>
+              <div className="text-6xl font-black text-primary font-headline">{score} / {questions.length}</div>
             </div>
-
-            <Button size="lg" className="w-full h-16 text-xl font-bold" onClick={() => setState('START')}>
-              KEMBALI KE MENU
-            </Button>
+            <Button size="lg" className="w-full h-16 text-xl font-bold" onClick={() => setState('START')}>KEMBALI KE MENU</Button>
           </motion.div>
         )}
       </AnimatePresence>
