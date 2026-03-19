@@ -162,15 +162,15 @@ export function MemoryTest() {
                 </div>
                 <input 
                   type="range" 
-                  min="5" 
+                  min="1" 
                   max="50" 
-                  step="5" 
+                  step="1" 
                   value={itemCount} 
                   onChange={(e) => setItemCount(parseInt(e.target.value))}
                   className="w-full accent-primary h-1 bg-muted rounded-lg appearance-none cursor-pointer"
                 />
                 <div className="flex justify-between text-[10px] font-bold text-muted-foreground/50">
-                  <span>5</span>
+                  <span>1</span>
                   <span>50</span>
                 </div>
               </div>
