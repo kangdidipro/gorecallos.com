@@ -10,23 +10,26 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { usePAOStore } from '@/hooks/use-pao-store';
-import { Timer, X, CheckCircle2, AlertCircle, Zap, BrainCircuit } from 'lucide-react';
+import { 
+  Timer, X, CheckCircle2, AlertCircle, Zap, BrainCircuit,
+  ShieldCheck, Trophy, Globe, Briefcase, Users, Moon, Flame, Landmark, Mic, Scroll 
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 
 type QuizState = 'START' | 'PLAYING' | 'RESULT';
 
-const LEVEL_THEMES: Record<number, string> = {
-  1: "Karakter & Hero",
-  2: "Sport & Sepakbola",
-  3: "Budaya & Sejarah",
-  4: "Religi & Profesi",
-  5: "Tokoh & Dunia",
-  6: "Sejarah Islam",
-  7: "Modern & Krisis",
-  8: "Politik Dunia",
-  9: "Tragedi & Idola",
-  10: "Reformasi & Era",
+const LEVEL_CONFIG: Record<number, { theme: string; icon: any }> = {
+  1: { theme: "Karakter & Hero", icon: ShieldCheck },
+  2: { theme: "Sport & Sepakbola", icon: Trophy },
+  3: { theme: "Budaya & Sejarah", icon: Globe },
+  4: { theme: "Religi & Profesi", icon: Briefcase },
+  5: { theme: "Tokoh & Dunia", icon: Users },
+  6: { theme: "Sejarah Islam", icon: Moon },
+  7: { theme: "Modern & Krisis", icon: Flame },
+  8: { theme: "Politik Dunia", icon: Landmark },
+  9: { theme: "Tragedi & Idola", icon: Mic },
+  10: { theme: "Reformasi & Era", icon: Scroll },
 };
 
 const SPEEDS = [
@@ -189,21 +192,26 @@ export function BlitzQuiz() {
                 </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => (
-                  <Button 
-                    key={l}
-                    variant="outline"
-                    className={cn(
-                      "h-24 flex flex-col items-center justify-center border-2 transition-all p-2 gap-1",
-                      selectedLevels.includes(l) ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(222,255,154,0.3)]" : "border-primary/10 text-muted-foreground"
-                    )}
-                    onClick={() => toggleLevel(l)}
-                  >
-                    <span className="text-[10px] font-black font-headline uppercase opacity-60">LV {l}</span>
-                    <span className="text-[11px] font-black text-center leading-tight">{LEVEL_THEMES[l]}</span>
-                    <span className="text-[9px] opacity-60 font-bold mt-auto">{(l-1)*10}-{l*10-1}</span>
-                  </Button>
-                ))}
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => {
+                  const Config = LEVEL_CONFIG[l];
+                  const Icon = Config.icon;
+                  return (
+                    <Button 
+                      key={l}
+                      variant="outline"
+                      className={cn(
+                        "h-28 flex flex-col items-center justify-center border-2 transition-all p-2 gap-1 group relative overflow-hidden",
+                        selectedLevels.includes(l) ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(222,255,154,0.3)]" : "border-primary/10 text-muted-foreground hover:border-primary/30"
+                      )}
+                      onClick={() => toggleLevel(l)}
+                    >
+                      <Icon className={cn("w-6 h-6 mb-1 transition-transform group-hover:scale-110", selectedLevels.includes(l) ? "text-black" : "text-primary/40")} />
+                      <span className="text-[9px] font-black font-headline uppercase opacity-60">LV {l}</span>
+                      <span className="text-[10px] font-black text-center leading-tight h-8 flex items-center">{Config.theme}</span>
+                      <span className="text-[9px] opacity-60 font-bold mt-auto">{(l-1)*10}-{l*10-1}</span>
+                    </Button>
+                  );
+                })}
               </div>
             </div>
 
