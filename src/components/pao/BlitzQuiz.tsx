@@ -7,7 +7,7 @@ import { PAO_DATABASE, PAOEntry } from '@/lib/pao-data';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { usePAOStore } from '@/hooks/use-pao-store';
-import { Timer, Trophy, X, CheckSquare, Square } from 'lucide-react';
+import { Timer, Trophy, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type QuizState = 'START' | 'PLAYING' | 'RESULT';
@@ -27,7 +27,7 @@ export function BlitzQuiz() {
   const toggleLevel = (lvl: number) => {
     setSelectedLevels(prev => 
       prev.includes(lvl) 
-        ? (prev.length > 1 ? prev.filter(l => l !== lvl) : prev) 
+        ? prev.filter(l => l !== lvl)
         : [...prev, lvl].sort((a, b) => a - b)
     );
   };
@@ -36,20 +36,24 @@ export function BlitzQuiz() {
     setSelectedLevels([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   };
 
+  const unselectAll = () => {
+    setSelectedLevels([]);
+  };
+
   const playCorrectSound = () => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'); 
     audio.play().catch(() => {});
   };
 
   const generateQuiz = useCallback(() => {
+    if (selectedLevels.length === 0) return;
+
     let pool: PAOEntry[] = [];
     selectedLevels.forEach(lvl => {
       const start = (lvl - 1) * 10;
       const end = lvl * 10;
       pool = [...pool, ...PAO_DATABASE.slice(start, end)];
     });
-
-    if (pool.length === 0) return;
 
     // Add weights for weak entries
     const weightedPool = [...pool];
@@ -87,7 +91,7 @@ export function BlitzQuiz() {
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (state === 'PLAYING' && timeLeft > 0 && !isChecking) {
-      timer = setTimeout(() => setTimeLeft(prev => prev - 0.1), 100);
+      timer = setTimeout(() => setTimeLeft(prev => Math.max(0, prev - 0.1)), 100);
     } else if (state === 'PLAYING' && timeLeft <= 0 && !isChecking) {
       handleAnswer('');
     }
@@ -137,20 +141,30 @@ export function BlitzQuiz() {
           >
             <div className="space-y-2">
               <h2 className="text-4xl font-bold font-headline text-primary neon-glow">The Blitz Quiz</h2>
-              <p className="text-muted-foreground">Pilih level (rentang angka) yang ingin dilatih.</p>
+              <p className="text-muted-foreground">Pilih rentang angka (Level) untuk melatih refleks memori.</p>
             </div>
 
             <div className="space-y-4">
               <div className="flex justify-between items-center px-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Select Levels</p>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-[10px] font-bold uppercase text-primary hover:text-primary/80"
-                  onClick={selectAll}
-                >
-                  Pilih Semua Level
-                </Button>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Konfigurasi Level</p>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-[10px] font-bold uppercase text-primary hover:text-primary/80 h-auto p-1"
+                    onClick={selectAll}
+                  >
+                    Pilih Semua
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-[10px] font-bold uppercase text-destructive hover:text-destructive/80 h-auto p-1"
+                    onClick={unselectAll}
+                  >
+                    Hapus Semua
+                  </Button>
+                </div>
               </div>
               
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -179,8 +193,13 @@ export function BlitzQuiz() {
               </div>
             </div>
 
-            <Button size="lg" className="w-full h-16 text-xl font-bold rounded-xl shadow-2xl" onClick={generateQuiz}>
-              MULAI BLITZ ({selectedLevels.length} Level)
+            <Button 
+              size="lg" 
+              className="w-full h-16 text-xl font-bold rounded-xl shadow-2xl" 
+              onClick={generateQuiz}
+              disabled={selectedLevels.length === 0}
+            >
+              {selectedLevels.length === 0 ? "PILIH LEVEL DULU" : `MULAI BLITZ (${selectedLevels.length} Level)`}
             </Button>
           </motion.div>
         )}
@@ -195,7 +214,10 @@ export function BlitzQuiz() {
             <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest text-muted-foreground">
               <span>Q {currentIndex + 1} / {questions.length}</span>
               <div className="flex items-center gap-4">
-                <span className="flex items-center gap-2 text-secondary">
+                <span className={cn(
+                  "flex items-center gap-2 transition-colors",
+                  timeLeft < 2 ? "text-destructive animate-pulse" : "text-secondary"
+                )}>
                   <Timer className="w-4 h-4" /> {timeLeft.toFixed(1)}s
                 </span>
                 <Button 
@@ -235,7 +257,7 @@ export function BlitzQuiz() {
                     className={cn(
                       "h-16 text-lg border-2 transition-all text-left px-6",
                       !isChecking && "border-primary/20 hover:border-primary hover:bg-primary/5",
-                      isChecking && isCorrect && "bg-primary/20 border-primary text-primary neon-glow",
+                      isChecking && isCorrect && "bg-primary/20 border-primary text-primary neon-glow shadow-[0_0_10px_rgba(222,255,154,0.5)]",
                       isChecking && isSelected && !isCorrect && "bg-destructive/20 border-destructive text-destructive",
                       isChecking && !isSelected && !isCorrect && "opacity-30"
                     )}
@@ -257,8 +279,12 @@ export function BlitzQuiz() {
             className="text-center space-y-8 py-12"
           >
             <div className="relative inline-block">
-              <Trophy className="w-24 h-24 text-secondary mx-auto mb-4" />
-              <div className="absolute inset-0 blur-3xl bg-secondary/20 rounded-full" />
+              {score > 7 ? (
+                <CheckCircle2 className="w-24 h-24 text-primary mx-auto mb-4" />
+              ) : (
+                <AlertCircle className="w-24 h-24 text-secondary mx-auto mb-4" />
+              )}
+              <div className="absolute inset-0 blur-3xl bg-primary/10 rounded-full" />
             </div>
             
             <div className="space-y-2">
@@ -266,8 +292,8 @@ export function BlitzQuiz() {
               <div className="text-6xl font-black text-primary font-headline">
                 {score} / {questions.length}
               </div>
-              <p className="text-muted-foreground">
-                {score === questions.length ? "Luar biasa! Insting Anda tajam." : "Terus berlatih untuk mencapai level insting."}
+              <p className="text-muted-foreground px-8">
+                {score === questions.length ? "Luar biasa! Koneksi neural Anda sempurna." : "Terus berlatih untuk mengasah kecepatan recall Anda."}
               </p>
             </div>
 
