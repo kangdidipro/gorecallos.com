@@ -49,12 +49,17 @@ export default function MasterPAOPage() {
   const currentEntry = PAO_DATABASE[learningIndex];
   const currentStrength = blitzStrength[currentEntry.number]?.strength || 0;
   
-  const totalActivated = new Set([...Object.keys(blitzStrength), ...Object.keys(testStrength)]).size;
+  // Stats Calculation
+  const totalActivated = new Set([
+    ...Object.keys(blitzStrength).filter(k => blitzStrength[k].strength > 0), 
+    ...Object.keys(testStrength).filter(k => testStrength[k].strength > 0)
+  ]).size;
   
-  const totalSync = [...Object.values(blitzStrength), ...Object.values(testStrength)];
-  const avgSync = totalSync.length > 0 
-    ? Math.round(totalSync.reduce((a, b) => a + b.strength, 0) / totalSync.length) 
-    : 0;
+  const sumBlitz = Object.values(blitzStrength).reduce((acc, s) => acc + s.strength, 0);
+  const sumTest = Object.values(testStrength).reduce((acc, s) => acc + s.strength, 0);
+  
+  // Total synchronization across the whole 00-99 system (200 slots total)
+  const avgSync = Math.round((sumBlitz + sumTest) / 200);
 
   const handleNext = () => setLearningIndex((prev) => (prev === 99 ? 0 : prev + 1));
   const handlePrev = () => setLearningIndex((prev) => (prev === 0 ? 99 : prev - 1));
