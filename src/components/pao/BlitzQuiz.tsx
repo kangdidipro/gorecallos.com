@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -113,7 +114,7 @@ export function BlitzQuiz() {
       }
     }
 
-    // Delay 1 detik agar pengguna bisa melihat feedback visual
+    // Delay 1 detik agar pengguna bisa melihat feedback visual pada tombol
     setTimeout(() => {
       if (currentIndex < questions.length - 1) {
         setCurrentIndex(prev => prev + 1);
@@ -207,7 +208,6 @@ export function BlitzQuiz() {
                     className={cn(
                       "h-16 text-lg border-2 transition-all text-left px-6",
                       !isChecking && "border-primary/20 hover:border-primary hover:bg-primary/5",
-                      // Feedback visual
                       isChecking && isCorrect && "bg-primary/20 border-primary text-primary neon-glow",
                       isChecking && isSelected && !isCorrect && "bg-destructive/20 border-destructive text-destructive",
                       isChecking && !isSelected && !isCorrect && "opacity-30"

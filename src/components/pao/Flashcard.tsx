@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -16,7 +17,7 @@ export function Flashcard({ entry, strength }: FlashcardProps) {
 
   return (
     <div 
-      className="relative w-full max-w-sm aspect-[3/4] cursor-pointer perspective-1000 group"
+      className="relative w-full max-w-lg aspect-[4/5] md:aspect-[3/4] cursor-pointer perspective-1000 group"
       onClick={() => setIsFlipped(!isFlipped)}
     >
       <motion.div
@@ -26,51 +27,51 @@ export function Flashcard({ entry, strength }: FlashcardProps) {
       >
         {/* Front Side */}
         <Card className={cn(
-          "absolute inset-0 w-full h-full backface-hidden flex flex-col items-center justify-center p-8",
+          "absolute inset-0 w-full h-full backface-hidden flex flex-col items-center justify-center p-12",
           "bg-card border-2 border-primary/20 hover:border-primary/50 transition-colors shadow-2xl"
         )}>
-          <div className="absolute top-4 right-4 text-xs font-bold text-primary/40 uppercase tracking-widest">
+          <div className="absolute top-6 right-6 text-xs font-bold text-primary/40 uppercase tracking-widest">
             Neural Strength: {strength}%
           </div>
-          <div className="text-8xl font-black font-headline text-primary neon-glow animate-glow-pulse">
+          <div className="text-9xl font-black font-headline text-primary neon-glow animate-glow-pulse">
             {entry.number}
           </div>
-          <div className="mt-8 text-muted-foreground uppercase tracking-widest text-sm">
+          <div className="mt-12 text-muted-foreground uppercase tracking-widest text-sm font-bold opacity-60">
             Sentuh untuk Membalik
           </div>
         </Card>
 
         {/* Back Side */}
         <Card className={cn(
-          "absolute inset-0 w-full h-full backface-hidden rotate-y-180 flex flex-col p-6 overflow-hidden",
+          "absolute inset-0 w-full h-full backface-hidden rotate-y-180 flex flex-col p-10 overflow-y-auto",
           "bg-card border-2 border-secondary/20 shadow-2xl"
         )}>
-          <div className="flex justify-between items-start mb-6">
-            <span className="text-4xl font-headline font-bold text-secondary">{entry.number}</span>
+          <div className="flex justify-between items-start mb-8">
+            <span className="text-5xl font-headline font-bold text-secondary">{entry.number}</span>
             <div className="text-right">
-              <span className="block text-xs text-muted-foreground uppercase tracking-wider">Identitas Neural</span>
+              <span className="block text-xs text-muted-foreground uppercase tracking-wider font-bold">Identitas Neural</span>
             </div>
           </div>
 
-          <div className="space-y-6 flex-1">
+          <div className="space-y-8 flex-1">
             <section>
-              <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-1">Person (Tokoh)</h4>
-              <p className="text-xl font-headline font-semibold text-foreground">{entry.person}</p>
+              <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-1 opacity-70">Person (Tokoh)</h4>
+              <p className="text-3xl font-headline font-bold text-foreground">{entry.person}</p>
             </section>
             
             <section>
-              <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-1">Action (Aksi)</h4>
-              <p className="text-xl font-headline font-semibold text-foreground">{entry.action}</p>
+              <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-1 opacity-70">Action (Aksi)</h4>
+              <p className="text-3xl font-headline font-bold text-foreground">{entry.action}</p>
             </section>
 
             <section>
-              <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-1">Object (Benda)</h4>
-              <p className="text-xl font-headline font-semibold text-foreground">{entry.object}</p>
+              <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-1 opacity-70">Object (Benda)</h4>
+              <p className="text-3xl font-headline font-bold text-foreground">{entry.object}</p>
             </section>
 
-            <section className="pt-4 border-t border-border">
-              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">Etimologi</h4>
-              <p className="text-sm leading-relaxed text-muted-foreground italic">
+            <section className="pt-6 border-t border-border mt-auto">
+              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">Etimologi / Logika Visual</h4>
+              <p className="text-base leading-relaxed text-muted-foreground italic">
                 {entry.etymology}
               </p>
             </section>

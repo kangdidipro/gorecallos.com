@@ -11,7 +11,7 @@ export const PAO_DATABASE: PAOEntry[] = [
   { number: "00", person: "Obelix", action: "Menggendong", object: "Menhir", etymology: "Bentuk bulat batu Menhir" },
   { number: "01", person: "Iron Man", action: "Meluncurkan", object: "Roket", etymology: "Posisi terbang vertikal (angka 1)" },
   { number: "02", person: "Zorro", action: "Menggores", object: "Huruf Z", etymology: "Lekukan alur huruf Z (angka 2)" },
-  { number: "03", person: "Batman", action: "Melepas", object: "Batarang", etymology: "Mirip sayap Batarang" },
+  { number: "03", person: "Batman", action: "Melempar", object: "Batarang", etymology: "Mirip sayap Batarang" },
   { number: "04", person: "Aladdin", action: "Menggosok", object: "Lampu Ajaib", etymology: "Garis membentuk huruf A" },
   { number: "05", person: "Superman", action: "Membusungkan", object: "Logo S", etymology: "Garis atas & lengkung mirip S" },
   { number: "06", person: "Gatotkaca", action: "Meninju", object: "Bumi", etymology: "Perut mirip huruf G" },
