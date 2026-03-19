@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -11,18 +12,96 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Search, icons } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { 
+  Search, 
+  icons, 
+  Edit2, 
+  Save, 
+  X, 
+  Loader2 
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { 
+  useFirestore, 
+  useUser, 
+  useCollection, 
+  useMemoFirebase 
+} from '@/firebase';
+import { doc, setDoc, collection } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export function PAOTable() {
   const [search, setSearch] = useState("");
+  const { firestore } = useFirestore();
+  const { user } = useUser();
+  
+  // State for Editing
+  const [editingEntry, setEditingEntry] = useState<PAOEntry | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const filteredData = PAO_DATABASE.filter(entry => 
+  // Fetch custom entries from Firestore
+  const customEntriesQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, 'users', user.uid, 'customPaoEntries');
+  }, [firestore, user]);
+
+  const { data: customData, isLoading: isCustomLoading } = useCollection<PAOEntry>(customEntriesQuery);
+
+  // Merge static data with custom data from Firestore
+  const mergedData = PAO_DATABASE.map(staticEntry => {
+    const custom = customData?.find(c => c.id === staticEntry.number);
+    return custom ? { ...staticEntry, ...custom } : staticEntry;
+  });
+
+  const filteredData = mergedData.filter(entry => 
     entry.number.includes(search) ||
     entry.person.toLowerCase().includes(search.toLowerCase()) ||
     entry.action.toLowerCase().includes(search.toLowerCase()) ||
     entry.object.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleEditClick = (entry: PAOEntry) => {
+    setEditingEntry({ ...entry });
+  };
+
+  const handleSave = () => {
+    if (!editingEntry || !firestore || !user) return;
+    setIsSaving(true);
+
+    const docRef = doc(firestore, 'users', user.uid, 'customPaoEntries', editingEntry.number);
+    
+    // Non-blocking update pattern
+    setDoc(docRef, {
+      ...editingEntry,
+      id: editingEntry.number, // Ensure ID matches for security rules
+      userId: user.uid,
+      updatedAt: new Date().toISOString()
+    }, { merge: true })
+      .then(() => {
+        setEditingEntry(null);
+        setIsSaving(false);
+      })
+      .catch(async (error) => {
+        setIsSaving(false);
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'write',
+          requestResourceData: editingEntry,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
+  };
 
   return (
     <div className="space-y-6">
@@ -46,6 +125,7 @@ export function PAOTable() {
                 <TableHead>Action</TableHead>
                 <TableHead>Object</TableHead>
                 <TableHead className="hidden md:table-cell">Etymology</TableHead>
+                <TableHead className="w-12 text-center">Edit</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -72,12 +152,23 @@ export function PAOTable() {
                       <TableCell className="text-[10px] text-muted-foreground italic leading-tight hidden md:table-cell max-w-xs">
                         {entry.etymology}
                       </TableCell>
+                      <TableCell className="text-center">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="w-8 h-8 text-muted-foreground hover:text-primary"
+                          onClick={() => handleEditClick(entry)}
+                          disabled={!user}
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   );
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                     Data tidak ditemukan.
                   </TableCell>
                 </TableRow>
@@ -86,6 +177,74 @@ export function PAOTable() {
           </Table>
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingEntry} onOpenChange={(open) => !open && setEditingEntry(null)}>
+        <DialogContent className="sm:max-w-[425px] bg-card border-primary/20">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black font-headline text-primary">
+              Edit PAO {editingEntry?.number}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {editingEntry && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="person" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Person</Label>
+                <Input 
+                  id="person" 
+                  value={editingEntry.person} 
+                  onChange={(e) => setEditingEntry({...editingEntry, person: e.target.value})}
+                  className="bg-muted/20 border-border/50"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="action" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Action</Label>
+                <Input 
+                  id="action" 
+                  value={editingEntry.action} 
+                  onChange={(e) => setEditingEntry({...editingEntry, action: e.target.value})}
+                  className="bg-muted/20 border-border/50"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="object" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Object</Label>
+                <Input 
+                  id="object" 
+                  value={editingEntry.object} 
+                  onChange={(e) => setEditingEntry({...editingEntry, object: e.target.value})}
+                  className="bg-muted/20 border-border/50"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="etymology" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Etymology</Label>
+                <Textarea 
+                  id="etymology" 
+                  value={editingEntry.etymology} 
+                  onChange={(e) => setEditingEntry({...editingEntry, etymology: e.target.value})}
+                  className="bg-muted/20 border-border/50 resize-none h-24"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setEditingEntry(null)} disabled={isSaving} className="flex-1">
+              Batal
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving} className="flex-1 gap-2">
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Simpan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {!user && (
+        <p className="text-[10px] text-center text-muted-foreground font-bold uppercase tracking-widest animate-pulse">
+          Silakan login untuk menyimpan kustomisasi PAO Anda.
+        </p>
+      )}
     </div>
   );
 }
