@@ -7,19 +7,16 @@ import { PAO_DATABASE, PAOEntry } from '@/lib/pao-data';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { usePAOStore } from '@/hooks/use-pao-store';
-import { Timer, Trophy, X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Timer, Trophy, X, CheckSquare, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type QuizState = 'START' | 'PLAYING' | 'RESULT';
-type QuizLevel = 1 | 2 | 3;
 
 export function BlitzQuiz() {
-  const { toast } = useToast();
   const { neuralStrength, updateStrength } = usePAOStore();
   
   const [state, setState] = useState<QuizState>('START');
-  const [level, setLevel] = useState<QuizLevel>(1);
+  const [selectedLevels, setSelectedLevels] = useState<number[]>([1]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(5);
@@ -27,21 +24,39 @@ export function BlitzQuiz() {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(false);
 
+  const toggleLevel = (lvl: number) => {
+    setSelectedLevels(prev => 
+      prev.includes(lvl) 
+        ? (prev.length > 1 ? prev.filter(l => l !== lvl) : prev) 
+        : [...prev, lvl].sort((a, b) => a - b)
+    );
+  };
+
+  const selectAll = () => {
+    setSelectedLevels([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  };
+
   const playCorrectSound = () => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'); 
     audio.play().catch(() => {});
   };
 
   const generateQuiz = useCallback(() => {
-    let pool = PAO_DATABASE;
-    if (level === 1) pool = PAO_DATABASE.slice(0, 20);
-    if (level === 2) pool = PAO_DATABASE.slice(0, 50);
+    let pool: PAOEntry[] = [];
+    selectedLevels.forEach(lvl => {
+      const start = (lvl - 1) * 10;
+      const end = lvl * 10;
+      pool = [...pool, ...PAO_DATABASE.slice(start, end)];
+    });
 
+    if (pool.length === 0) return;
+
+    // Add weights for weak entries
     const weightedPool = [...pool];
     Object.keys(neuralStrength).forEach(numStr => {
       const stats = neuralStrength[numStr];
       if (stats.strength < 50) {
-        const entry = PAO_DATABASE.find(e => e.number === numStr);
+        const entry = pool.find(e => e.number === numStr);
         if (entry) weightedPool.push(entry, entry);
       }
     });
@@ -49,12 +64,8 @@ export function BlitzQuiz() {
     const selectedEntries = Array.from({ length: 10 }).map(() => weightedPool[Math.floor(Math.random() * weightedPool.length)]);
 
     const quizQuestions = selectedEntries.map((entry) => {
-      let type: 'person' | 'action' | 'object' = 'person';
-      if (level === 2) type = Math.random() > 0.5 ? 'person' : 'action';
-      if (level === 3) {
-        const r = Math.random();
-        type = r < 0.33 ? 'person' : r < 0.66 ? 'action' : 'object';
-      }
+      const types: ('person' | 'action' | 'object')[] = ['person', 'action', 'object'];
+      const type = types[Math.floor(Math.random() * types.length)];
 
       const correctAns = entry[type];
       const distractorPool = PAO_DATABASE.filter(e => e.number !== entry.number).map(e => e[type]);
@@ -71,7 +82,7 @@ export function BlitzQuiz() {
     setSelectedOption(null);
     setIsChecking(false);
     setState('PLAYING');
-  }, [level, neuralStrength]);
+  }, [selectedLevels, neuralStrength]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -122,34 +133,54 @@ export function BlitzQuiz() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="text-center space-y-8 py-12"
+            className="text-center space-y-8 py-8"
           >
             <div className="space-y-2">
               <h2 className="text-4xl font-bold font-headline text-primary neon-glow">The Blitz Quiz</h2>
-              <p className="text-muted-foreground">Uji refleks memori Anda di bawah tekanan waktu.</p>
+              <p className="text-muted-foreground">Pilih level (rentang angka) yang ingin dilatih.</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[1, 2, 3].map((l) => (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center px-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Select Levels</p>
                 <Button 
-                  key={l}
-                  variant={level === l ? "default" : "outline"}
-                  className={cn(
-                    "h-24 flex flex-col gap-1 border-2",
-                    level === l ? "bg-primary text-black border-primary" : "border-primary/20 text-primary hover:bg-primary/10"
-                  )}
-                  onClick={() => setLevel(l as QuizLevel)}
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-[10px] font-bold uppercase text-primary hover:text-primary/80"
+                  onClick={selectAll}
                 >
-                  <span className="text-lg font-bold">Level {l}</span>
-                  <span className="text-[10px] opacity-70">
-                    {l === 1 ? "Tokoh (00-19)" : l === 2 ? "Tokoh & Aksi (00-49)" : "Campuran (Semua)"}
-                  </span>
+                  Pilih Semua Level
                 </Button>
-              ))}
+              </div>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => {
+                  const isSelected = selectedLevels.includes(l);
+                  const rangeStart = (l - 1) * 10;
+                  const rangeEnd = rangeStart + 9;
+                  
+                  return (
+                    <Button 
+                      key={l}
+                      variant="outline"
+                      className={cn(
+                        "h-16 flex flex-col items-center justify-center border-2 transition-all p-0",
+                        isSelected 
+                          ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(222,255,154,0.3)]" 
+                          : "border-primary/10 text-muted-foreground hover:border-primary/40"
+                      )}
+                      onClick={() => toggleLevel(l)}
+                    >
+                      <span className="text-xs font-black font-headline">LV {l}</span>
+                      <span className="text-[9px] opacity-60 font-bold">{rangeStart.toString().padStart(2, '0')}-{rangeEnd.toString().padStart(2, '0')}</span>
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
 
-            <Button size="lg" className="w-full h-16 text-xl font-bold rounded-xl" onClick={generateQuiz}>
-              MULAI BLITZ
+            <Button size="lg" className="w-full h-16 text-xl font-bold rounded-xl shadow-2xl" onClick={generateQuiz}>
+              MULAI BLITZ ({selectedLevels.length} Level)
             </Button>
           </motion.div>
         )}
@@ -162,7 +193,7 @@ export function BlitzQuiz() {
             className="space-y-8"
           >
             <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest text-muted-foreground">
-              <span>Pertanyaan {currentIndex + 1} / {questions.length}</span>
+              <span>Q {currentIndex + 1} / {questions.length}</span>
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-2 text-secondary">
                   <Timer className="w-4 h-4" /> {timeLeft.toFixed(1)}s
@@ -172,7 +203,6 @@ export function BlitzQuiz() {
                   size="icon" 
                   className="w-8 h-8 rounded-full hover:bg-destructive/10 text-destructive"
                   onClick={() => setState('START')}
-                  title="Berhenti"
                 >
                   <X className="w-4 h-4" />
                 </Button>
