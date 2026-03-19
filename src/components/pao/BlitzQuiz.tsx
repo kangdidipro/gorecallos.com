@@ -7,10 +7,23 @@ import { PAO_DATABASE, PAOEntry } from '@/lib/pao-data';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { usePAOStore } from '@/hooks/use-pao-store';
-import { Timer, Trophy, X, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Timer, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type QuizState = 'START' | 'PLAYING' | 'RESULT';
+
+const LEVEL_THEMES: Record<number, string> = {
+  1: "Karakter & Hero",
+  2: "Sport & Sepakbola",
+  3: "Budaya & Sejarah",
+  4: "Religi & Profesi",
+  5: "Tokoh & Dunia",
+  6: "Sejarah Islam",
+  7: "Modern & Krisis",
+  8: "Politik Dunia",
+  9: "Tragedi & Idola",
+  10: "Reformasi & Era",
+};
 
 export function BlitzQuiz() {
   const { neuralStrength, updateStrength } = usePAOStore();
@@ -55,7 +68,6 @@ export function BlitzQuiz() {
       pool = [...pool, ...PAO_DATABASE.slice(start, end)];
     });
 
-    // Add weights for weak entries
     const weightedPool = [...pool];
     Object.keys(neuralStrength).forEach(numStr => {
       const stats = neuralStrength[numStr];
@@ -137,11 +149,11 @@ export function BlitzQuiz() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="text-center space-y-8 py-8"
+            className="text-center space-y-8 py-4"
           >
             <div className="space-y-2">
               <h2 className="text-4xl font-bold font-headline text-primary neon-glow">The Blitz Quiz</h2>
-              <p className="text-muted-foreground">Pilih rentang angka (Level) untuk melatih refleks memori.</p>
+              <p className="text-muted-foreground text-sm">Pilih rentang angka (Level) untuk melatih refleks memori.</p>
             </div>
 
             <div className="space-y-4">
@@ -167,7 +179,7 @@ export function BlitzQuiz() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => {
                   const isSelected = selectedLevels.includes(l);
                   const rangeStart = (l - 1) * 10;
@@ -178,15 +190,16 @@ export function BlitzQuiz() {
                       key={l}
                       variant="outline"
                       className={cn(
-                        "h-16 flex flex-col items-center justify-center border-2 transition-all p-0",
+                        "h-24 flex flex-col items-center justify-center border-2 transition-all p-2 gap-1",
                         isSelected 
                           ? "bg-primary text-black border-primary shadow-[0_0_15px_rgba(222,255,154,0.3)]" 
                           : "border-primary/10 text-muted-foreground hover:border-primary/40"
                       )}
                       onClick={() => toggleLevel(l)}
                     >
-                      <span className="text-xs font-black font-headline">LV {l}</span>
-                      <span className="text-[9px] opacity-60 font-bold">{rangeStart.toString().padStart(2, '0')}-{rangeEnd.toString().padStart(2, '0')}</span>
+                      <span className="text-[10px] font-black font-headline uppercase opacity-60">LV {l}</span>
+                      <span className="text-[11px] font-black text-center leading-tight">{LEVEL_THEMES[l]}</span>
+                      <span className="text-[9px] opacity-60 font-bold mt-auto">{rangeStart.toString().padStart(2, '0')}-{rangeEnd.toString().padStart(2, '0')}</span>
                     </Button>
                   );
                 })}
@@ -255,7 +268,7 @@ export function BlitzQuiz() {
                     variant="outline"
                     disabled={isChecking}
                     className={cn(
-                      "h-16 text-lg border-2 transition-all text-left px-6",
+                      "h-16 text-lg border-2 transition-all text-left px-6 whitespace-normal",
                       !isChecking && "border-primary/20 hover:border-primary hover:bg-primary/5",
                       isChecking && isCorrect && "bg-primary/20 border-primary text-primary neon-glow shadow-[0_0_10px_rgba(222,255,154,0.5)]",
                       isChecking && isSelected && !isCorrect && "bg-destructive/20 border-destructive text-destructive",
