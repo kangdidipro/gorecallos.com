@@ -28,14 +28,25 @@ const LEVEL_CONFIG: Record<number, { theme: string; icon: any }> = {
   10: { theme: "Reformasi & Era", icon: Scroll },
 };
 
+const SPEEDS = [
+  { label: 'Sangat Lambat', value: 15 },
+  { label: 'Lambat', value: 10 },
+  { label: 'Normal', value: 5 },
+  { label: 'Cepat', value: 3 },
+  { label: 'Sangat Cepat', value: 1.5 },
+];
+
+const ITEM_OPTIONS = [5, 10, 15, 20, 25];
+
 export function MemoryTest() {
   const [state, setState] = useState<TestState>('START');
   const [selectedLevels, setSelectedLevels] = useState<number[]>([1]);
   const [itemCount, setItemCount] = useState(5);
-  const [displayTime, setDisplayTime] = useState(3); // seconds per number
+  const [customItemCount, setCustomItemCount] = useState("");
+  const [displayTime, setDisplayTime] = useState(5); // Default Normal
   const [numbers, setNumbers] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(3);
+  const [timeLeft, setTimeLeft] = useState(5);
   const [userInputs, setUserInputs] = useState<string[]>([]);
   const [score, setScore] = useState(0);
 
@@ -60,12 +71,17 @@ export function MemoryTest() {
       }
     });
 
-    const generated = Array.from({ length: itemCount }).map(() => 
+    let finalCount = itemCount;
+    if (customItemCount && !isNaN(parseInt(customItemCount))) {
+      finalCount = Math.max(1, Math.min(100, parseInt(customItemCount)));
+    }
+
+    const generated = Array.from({ length: finalCount }).map(() => 
       pool[Math.floor(Math.random() * pool.length)]
     );
     
     setNumbers(generated);
-    setUserInputs(new Array(itemCount).fill(''));
+    setUserInputs(new Array(finalCount).fill(''));
     setCurrentIndex(0);
     setTimeLeft(displayTime);
     setState('MEMORIZING');
@@ -122,10 +138,10 @@ export function MemoryTest() {
               <p className="text-muted-foreground text-sm italic">Uji kapasitas penyimpanan data otak Anda.</p>
             </div>
 
-            {/* Level Selection Section */}
+            {/* Level Configuration */}
             <div className="space-y-4">
               <div className="flex justify-between items-center px-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground text-left">1. Pilih Level Angka</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">1. Pilih Level Angka</p>
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" className="text-[10px] font-bold uppercase text-primary h-auto p-1" onClick={selectAll}>Semua</Button>
                   <Button variant="ghost" size="sm" className="text-[10px] font-bold uppercase text-destructive h-auto p-1" onClick={unselectAll}>Hapus</Button>
@@ -154,44 +170,52 @@ export function MemoryTest() {
               </div>
             </div>
 
-            <div className="space-y-6 bg-muted/10 p-6 rounded-xl border border-border/50">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center px-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">2. Jumlah Angka</Label>
-                  <span className="text-primary font-black font-headline text-lg">{itemCount}</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="1" 
-                  max="50" 
-                  step="1" 
-                  value={itemCount} 
-                  onChange={(e) => setItemCount(parseInt(e.target.value))}
-                  className="w-full accent-primary h-1 bg-muted rounded-lg appearance-none cursor-pointer"
-                />
-                <div className="flex justify-between text-[10px] font-bold text-muted-foreground/50">
-                  <span>1</span>
-                  <span>50</span>
-                </div>
+            {/* Speed Configuration */}
+            <div className="space-y-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground text-left px-2">2. Durasi Per Angka</p>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {SPEEDS.map((s) => (
+                  <Button
+                    key={s.value}
+                    variant="outline"
+                    className={cn(
+                      "h-12 text-[10px] font-bold uppercase border-2",
+                      displayTime === s.value ? "bg-secondary text-black border-secondary" : "border-secondary/10 text-muted-foreground"
+                    )}
+                    onClick={() => setDisplayTime(s.value)}
+                  >
+                    {s.label}
+                  </Button>
+                ))}
               </div>
+            </div>
 
-              <div className="space-y-4">
-                <div className="flex justify-between items-center px-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">3. Durasi Per Angka</Label>
-                  <span className="text-secondary font-black font-headline text-lg">{displayTime}s</span>
+            {/* Question Count Configuration */}
+            <div className="space-y-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground text-left px-2">3. Jumlah Angka</p>
+              <div className="space-y-3">
+                <div className="grid grid-cols-5 gap-2">
+                  {ITEM_OPTIONS.map((count) => (
+                    <Button
+                      key={count}
+                      variant="outline"
+                      className={cn(
+                        "h-10 text-[11px] font-bold border-2",
+                        itemCount === count && !customItemCount ? "bg-primary text-black border-primary" : "border-primary/10 text-muted-foreground"
+                      )}
+                      onClick={() => { setItemCount(count); setCustomItemCount(""); }}
+                    >
+                      {count}
+                    </Button>
+                  ))}
                 </div>
-                <input 
-                  type="range" 
-                  min="1" 
-                  max="10" 
-                  value={displayTime} 
-                  onChange={(e) => setDisplayTime(parseInt(e.target.value))}
-                  className="w-full accent-secondary h-1 bg-muted rounded-lg appearance-none cursor-pointer"
+                <Input 
+                  type="number"
+                  placeholder="Masukkan jumlah kustom..."
+                  className="bg-muted/20 border-border/50 text-center h-12 font-bold"
+                  value={customItemCount}
+                  onChange={(e) => { setCustomItemCount(e.target.value); setItemCount(0); }}
                 />
-                <div className="flex justify-between text-[10px] font-bold text-muted-foreground/50">
-                  <span>1s</span>
-                  <span>10s</span>
-                </div>
               </div>
             </div>
 
