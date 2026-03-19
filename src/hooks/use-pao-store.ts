@@ -29,8 +29,6 @@ export function usePAOStore() {
       const newSuccesses = isCorrect ? current.successes + 1 : current.successes;
       const newErrors = !isCorrect ? current.errors + 1 : current.errors;
       
-      // Basic strength calculation: ratio of successes over recent attempts
-      // In a real app, use an SRS algorithm like Anki
       const total = newSuccesses + newErrors;
       const newStrength = Math.min(100, Math.round((newSuccesses / total) * 100));
 
@@ -49,5 +47,10 @@ export function usePAOStore() {
     });
   };
 
-  return { neuralStrength, updateStrength };
+  const resetProgress = () => {
+    localStorage.removeItem('pao_neural_strength');
+    setNeuralStrength({});
+  };
+
+  return { neuralStrength, updateStrength, resetProgress };
 }
