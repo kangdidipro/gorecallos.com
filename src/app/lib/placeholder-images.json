@@ -1,0 +1,17 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-lab",
+      "description": "Futuristic laboratory environment",
+      "imageUrl": "https://picsum.photos/seed/pao1/1200/600",
+      "imageHint": "futuristic laboratory"
+    },
+    {
+      "id": "pao-card-bg",
+      "description": "Abstract neon texture",
+      "imageUrl": "https://picsum.photos/seed/pao2/400/600",
+      "imageHint": "neon abstract"
+    }
+  ]
+}

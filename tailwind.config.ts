@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -10,8 +11,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['PT Sans', 'sans-serif'],
+        headline: ['Urbanist', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
@@ -88,10 +89,15 @@ export default {
             height: '0',
           },
         },
+        'glow-pulse': {
+          '0%, 100%': { opacity: '1', filter: 'drop-shadow(0 0 10px #DEFF9A)' },
+          '50%': { opacity: '0.8', filter: 'drop-shadow(0 0 20px #DEFF9A)' },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'glow-pulse': 'glow-pulse 2s infinite ease-in-out',
       },
     },
   },
