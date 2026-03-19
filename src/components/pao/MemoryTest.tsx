@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
-import { Brain, Timer, RotateCcw, CheckCircle2, XCircle, Play, Eye } from 'lucide-react';
+import { Brain, Timer, RotateCcw, CheckCircle2, XCircle, Play, Eye, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type TestState = 'START' | 'MEMORIZING' | 'RECALLING' | 'RESULT';
@@ -132,35 +132,48 @@ export function MemoryTest() {
         )}
 
         {state === 'MEMORIZING' && (
-          <motion.div key="memorizing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12 py-12 text-center">
-            <div className="flex flex-col items-center gap-4">
+          <motion.div key="memorizing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12 py-4">
+            <div className="flex justify-between items-center px-2">
               <div className="text-sm font-bold uppercase tracking-[0.3em] text-muted-foreground">
                 Item {currentIndex + 1} / {numbers.length}
               </div>
+              <Button variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => setState('START')}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="flex flex-col items-center gap-4">
               <Progress value={(timeLeft / displayTime) * 100} className="h-1.5 w-48 bg-muted" />
             </div>
 
-            <motion.div 
-              key={currentIndex}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-[12rem] md:text-[15rem] font-black font-headline text-primary neon-glow leading-none"
-            >
-              {numbers[currentIndex]}
-            </motion.div>
+            <div className="text-center pb-12">
+              <motion.div 
+                key={currentIndex}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="text-[12rem] md:text-[15rem] font-black font-headline text-primary neon-glow leading-none"
+              >
+                {numbers[currentIndex]}
+              </motion.div>
 
-            <div className="flex items-center justify-center gap-2 text-secondary animate-pulse">
-              <Eye className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-widest">Memorizing...</span>
+              <div className="mt-8 flex items-center justify-center gap-2 text-secondary animate-pulse">
+                <Eye className="w-5 h-5" />
+                <span className="text-xs font-bold uppercase tracking-widest">Memorizing...</span>
+              </div>
             </div>
           </motion.div>
         )}
 
         {state === 'RECALLING' && (
-          <motion.div key="recalling" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-            <div className="text-center space-y-2">
-              <h3 className="text-2xl font-bold font-headline text-primary">Recall Phase</h3>
-              <p className="text-muted-foreground text-xs uppercase tracking-widest font-bold">Masukkan urutan angka yang Anda lihat</p>
+          <motion.div key="recalling" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 py-4">
+            <div className="flex justify-between items-start px-2">
+              <div className="flex-1 text-center pl-8">
+                <h3 className="text-2xl font-bold font-headline text-primary">Recall Phase</h3>
+                <p className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold">Masukkan urutan angka</p>
+              </div>
+              <Button variant="ghost" size="icon" className="text-destructive h-8 w-8 hover:bg-destructive/10" onClick={() => setState('START')}>
+                <X className="w-4 h-4" />
+              </Button>
             </div>
 
             <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 max-h-[400px] overflow-y-auto p-4 custom-scrollbar">
