@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * MASTER PAO SECURITY RULES
+     *
+     * CORE PHILOSOPHY:
+     * This ruleset enforces a strict user-ownership model for all personalized data while maintaining
+     * a read-only global knowledge base for the default Person-Action-Object (PAO) associations.
+     *
+     * DATA STRUCTURE:
+     * 1. Global Data: /paoEntries/{paoEntryNumber} - System-wide defaults accessible to all signed-in users.
+     * 2. User Data: /users/{userId}/... - Private data trees containing:
+     *    - customPaoEntries: Personalized overrides for the PAO table.
+     *    - paoProgress: Individual learning metrics and memory strength scores.
+     *
+     * KEY SECURITY DECISIONS:
+     * - Authorization Independence: We enforce that user-specific documents contain a 'userId' field
+     *   matching the authenticated user, allowing for fast, atomic security checks without parent lookups.
+     * - Prototyping Flexibility: While authorization is strictly enforced based on ownership, the
+     *   internal data shapes (excluding relational IDs) are not validated to allow for rapid iteration.
+     * - Immutable Identity: Critical relational fields (like userId or the entry ID) are enforced
+     *   during creation and made immutable during updates to prevent data hijacking.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /** @description Checks if the request is from an authenticated user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the authenticated user's UID matches the provided userId. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks if the document exists and the authenticated user is the owner. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    /** @description Validates that the data ID matches the path ID for consistency. */
+    function pathMatchesId(dataId, pathId) {
+      return dataId == pathId;
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Rules for the global Person-Action-Object reference table.
+     * @path /paoEntries/{paoEntryNumber}
+     * @allow (get, list) if the user is signed in.
+     * @deny (create, update, delete) for all users; this is system-managed data.
+     * @principle Public Read with Admin-Only Writes (Admin role not implemented in prototype).
+     */
+    match /paoEntries/{paoEntryNumber} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
+    match /users/{userId} {
+      
+      /**
+       * @description Rules for a user's personalized PAO entry overrides.
+       * @path /users/{userId}/customPaoEntries/{paoEntryNumber}
+       * @allow (create) if auth UID matches path and data.id matches paoEntryNumber.
+       * @allow (update) if existing owner and data.id remains unchanged.
+       * @deny (delete) if the user does not own the parent path.
+       * @principle Restricts access to a user's own data tree and ensures relational integrity.
+       */
+      match /customPaoEntries/{paoEntryNumber} {
+        allow get, list: if isOwner(userId);
+        
+        allow create: if isOwner(userId) 
+          && pathMatchesId(request.resource.data.id, paoEntryNumber);
+        
+        allow update: if isExistingOwner(userId) 
+          && pathMatchesId(request.resource.data.id, resource.data.id);
+        
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Rules for tracking individual user progress on specific PAO entries.
+       * @path /users/{userId}/paoProgress/{paoEntryNumber}
+       * @allow (create) if auth UID matches path and internal userId field.
+       * @allow (update) if existing owner and userId field is immutable.
+       * @deny (list) if the requested userId in the path does not match the requester's UID.
+       * @principle Enforces strict document ownership using denormalized userId for performance.
+       */
+      match /paoProgress/{paoEntryNumber} {
+        allow get, list: if isOwner(userId);
+        
+        allow create: if isOwner(userId) 
+          && request.resource.data.userId == userId
+          && pathMatchesId(request.resource.data.paoEntryId, paoEntryNumber);
+        
+        allow update: if isExistingOwner(userId) 
+          && request.resource.data.userId == resource.data.userId
+          && pathMatchesId(request.resource.data.paoEntryId, resource.data.paoEntryId);
+        
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+  }
+}

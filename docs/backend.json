@@ -1,0 +1,185 @@
+{
+  "entities": {
+    "PaoEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PaoEntry",
+      "type": "object",
+      "description": "Represents a single entry in the Person-Action-Object (PAO) memory table, linked to a two-digit number. This data is user-editable and forms the core knowledge base of the 'Master PAO' app.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PaoEntry entity, representing the two-digit number (e.g., '00', '42')."
+        },
+        "numberValue": {
+          "type": "number",
+          "description": "The numerical integer value of the PAO entry (0-99), derived from the ID for easy sorting and mathematical operations."
+        },
+        "person": {
+          "type": "string",
+          "description": "The 'Person' associated with this number in the PAO system, forming part of the memory mnemonic."
+        },
+        "action": {
+          "type": "string",
+          "description": "The 'Action' associated with this number in the PAO system, forming part of the memory mnemonic."
+        },
+        "object": {
+          "type": "string",
+          "description": "The 'Object' associated with this number in the PAO system, forming part of the memory mnemonic."
+        },
+        "etymology": {
+          "type": "string",
+          "description": "The narrative or etymological explanation/reasoning behind the PAO association, aiding in deeper memory encoding."
+        },
+        "isPlaceholder": {
+          "type": "boolean",
+          "description": "A flag indicating if this PAO entry is a placeholder that needs to be completed by the user or system."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when this PAO entry was initially created or loaded into the system.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating the last time this PAO entry was modified (e.g., by user edits).",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "numberValue",
+        "person",
+        "action",
+        "object",
+        "etymology",
+        "isPlaceholder",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserPaoProgress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserPaoProgress",
+      "type": "object",
+      "description": "Tracks a specific user's learning progress, performance metrics, and memory strength for a particular PAO entry. This data is used for progress visualization and adaptive review.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserPaoProgress entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who owns this progress record. (Relationship: User 1:N UserPaoProgress)"
+        },
+        "paoEntryId": {
+          "type": "string",
+          "description": "Reference to the PaoEntry this progress is associated with (e.g., '00', '42'). (Relationship: PaoEntry 1:N UserPaoProgress)"
+        },
+        "correctAttempts": {
+          "type": "number",
+          "description": "The total count of times the user correctly answered questions related to this specific PAO entry."
+        },
+        "incorrectAttempts": {
+          "type": "number",
+          "description": "The total count of times the user incorrectly answered questions related to this specific PAO entry."
+        },
+        "lastAttemptAt": {
+          "type": "string",
+          "description": "Timestamp of the user's most recent quiz or practice attempt for this PAO entry.",
+          "format": "date-time"
+        },
+        "averageRecallTimeMs": {
+          "type": "number",
+          "description": "The average time in milliseconds taken by the user for correct recalls of this PAO entry, crucial for assessing 'instinct' level recall speed."
+        },
+        "neuralStrengthScore": {
+          "type": "number",
+          "description": "A calculated score (e.g., 0.0 to 100.0) representing the user's current memory strength or mastery level for this particular PAO entry, based on performance."
+        },
+        "lastReviewModeShownAt": {
+          "type": "string",
+          "description": "Timestamp of the last time this specific PAO entry was presented to the user in the adaptive review mode, informing the spaced repetition algorithm.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "paoEntryId",
+        "correctAttempts",
+        "incorrectAttempts",
+        "lastAttemptAt",
+        "averageRecallTimeMs",
+        "neuralStrengthScore",
+        "lastReviewModeShownAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/paoEntries/{paoEntryNumber}",
+        "definition": {
+          "entityName": "PaoEntry",
+          "schema": {
+            "$ref": "#/backend/entities/PaoEntry"
+          },
+          "description": "System-provided, default Person-Action-Object (PAO) entries. These are read-only for most users, forming the foundational core knowledge base. An administrative role (not defined here) would typically manage write access. The document ID (`paoEntryNumber`) corresponds to the `id` field within the document.",
+          "params": [
+            {
+              "name": "paoEntryNumber",
+              "description": "The two-digit number for the PAO entry (00-99), serving as the document ID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/customPaoEntries/{paoEntryNumber}",
+        "definition": {
+          "entityName": "PaoEntry",
+          "schema": {
+            "$ref": "#/backend/entities/PaoEntry"
+          },
+          "description": "User-created or user-modified Person-Action-Object (PAO) entries, allowing for personalized memory associations. These entries override the global default PAO entries for the specific user. Includes a denormalized 'userId' field (matching the path parameter) within the document for robust authorization independence. The document ID (`paoEntryNumber`) corresponds to the 'id' field within the PaoEntry document.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "paoEntryNumber",
+              "description": "The two-digit number for the PAO entry (00-99), serving as the document ID. This ID also corresponds to the 'id' field within the PaoEntry document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/paoProgress/{paoEntryNumber}",
+        "definition": {
+          "entityName": "UserPaoProgress",
+          "schema": {
+            "$ref": "#/backend/entities/UserPaoProgress"
+          },
+          "description": "Tracks a specific user's learning progress and performance for each individual PAO entry. This data is exclusively owned by the user. The document ID (`paoEntryNumber`) corresponds to the `paoEntryId` field within the document. Includes denormalized `userId` for robust authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns this progress record."
+            },
+            {
+              "name": "paoEntryNumber",
+              "description": "The two-digit number for the PAO entry (00-99), serving as the document ID and matching the 'paoEntryId' field."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure for the 'Master PAO' application is designed with a strong emphasis on Authorization Independence, Structural Segregation, and clear Access Modeling to ensure security, scalability, and debuggability. The core principle of separating global, system-managed data from user-specific, editable data is central to this design. The system differentiates between two types of PaoEntry documents: 1. Global PAO Entries (`/paoEntries/{paoEntryNumber}`): This collection stores the default, system-provided PAO table. These documents are intended to be read-only for general users, forming the foundational 'core knowledge base' of the application. Write access to this collection would typically be restricted to administrative roles, ensuring the integrity and consistency of the default data across all users. 2. User-Specific Custom PAO Entries (`/users/{userId}/customPaoEntries/{paoEntryNumber}`): This subcollection allows individual users to create or modify their own personalized PAO entries. This addresses the 'user-editable' requirement by enabling users to customize the PAO associations for their personal learning experience, effectively overriding the global defaults for themselves. Each document in this subcollection will explicitly include the `userId` (denormalized from the parent user document) to ensure Authorization Independence. This allows security rules to validate ownership (`request.auth.uid == resource.data.userId`) directly on the document without performing expensive `get()` calls to parent documents. This structure makes user-specific write operations atomic and highly efficient. 3. User PAO Progress (`/users/{userId}/paoProgress/{paoEntryNumber}`): This subcollection tracks the learning progress, performance, and memory strength for each user on every PAO entry. Each document is uniquely identified by the `paoEntryNumber` (e.g., '00', '42') and owned by the `userId` in the path. The `UserPaoProgress` schema already includes `userId` and `paoEntryId` (which matches `paoEntryNumber` from the path), inherently providing Authorization Independence and simplifying security rules. Access is strictly limited to the owning user. How the structure achieves Authorization Independence (Denormalization Strategy): For `UserPaoProgress`, the `userId` is an explicit field within the `UserPaoProgress` document and is also present in the path (`/users/{userId}/...`). This dual presence ensures that security rules can directly compare `request.auth.uid` with `resource.data.userId` without relying on `get()` calls to parent documents, thus enabling atomic operations and simplifying rule logic. The `paoEntryId` within the document matches the `paoEntryNumber` in the path, making lookups straightforward. For `customPaoEntries`, although the `PaoEntry` schema itself does not define a `userId` field, our recommended implementation for `/users/{userId}/customPaoEntries/{paoEntryNumber}` mandates the inclusion of a `userId` field within each `PaoEntry` document stored in this subcollection. This denormalization allows security rules to verify `request.auth.uid == resource.data.userId` for read/write access without needing to inspect the parent path or perform additional lookups, adhering strictly to the Authorization Independence principle. How the structure supports QAPs (Queries as Authorization Predictors): Global PAO Entries: `/paoEntries` supports QAPs as it is a global collection. A user can freely `list` all PAO entries here. Security rules would simply allow `read` access for authenticated users. The query doesn't need to be filtered by `userId` in the rules, as it's public read data. User-Specific Data (`/users/{userId}/customPaoEntries` and `/users/{userId}/paoProgress`): These collections are inherently designed for QAPs. A `list` query from the client would target `/users/{request.auth.uid}/customPaoEntries` or `/users/{request.auth.uid}/paoProgress`. The security rules would then implicitly filter based on the `request.auth.uid` in the path, ensuring that users can only list *their own* custom PAO entries or progress records. No additional `where` clauses on the `userId` are strictly necessary for security within the rules themselves, as the path itself acts as the filter. The rules simply enforce that the `userId` in the path matches `request.auth.uid`, making queries predictable and secure."
+  }
+}
