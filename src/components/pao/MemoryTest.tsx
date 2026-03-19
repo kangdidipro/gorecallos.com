@@ -1,17 +1,20 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { usePAOStore } from '@/hooks/use-pao-store';
 import { 
-  Brain, Timer, RotateCcw, CheckCircle2, XCircle, Play, Eye, X,
+  Brain, Timer, RotateCcw, CheckCircle2, XCircle, Play, Eye, X, BrainCircuit,
   ShieldCheck, Trophy, Globe, Briefcase, Users, Moon, Flame, Landmark, Mic, Scroll 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 
 type TestState = 'START' | 'MEMORIZING' | 'RECALLING' | 'RESULT';
 
@@ -39,11 +42,13 @@ const SPEEDS = [
 const ITEM_OPTIONS = [5, 10, 15, 20, 25];
 
 export function MemoryTest() {
+  const { neuralStrength } = usePAOStore();
   const [state, setState] = useState<TestState>('START');
   const [selectedLevels, setSelectedLevels] = useState<number[]>([1]);
   const [itemCount, setItemCount] = useState(5);
   const [customItemCount, setCustomItemCount] = useState("");
-  const [displayTime, setDisplayTime] = useState(5); // Default Normal
+  const [displayTime, setDisplayTime] = useState(5);
+  const [focusUnmastered, setFocusUnmastered] = useState(false);
   const [numbers, setNumbers] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(5);
@@ -71,9 +76,29 @@ export function MemoryTest() {
       }
     });
 
+    if (focusUnmastered) {
+      pool = pool.filter(num => {
+        const stats = neuralStrength[num];
+        return !stats || stats.strength < 100;
+      });
+
+      if (pool.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Level Selesai!",
+          description: "Semua angka di level ini sudah mencapai 100% Neural Sync.",
+        });
+        return;
+      }
+    }
+
     let finalCount = itemCount;
     if (customItemCount && !isNaN(parseInt(customItemCount))) {
       finalCount = Math.max(1, Math.min(100, parseInt(customItemCount)));
+    }
+
+    if (focusUnmastered) {
+      finalCount = Math.min(finalCount, pool.length);
     }
 
     const generated = Array.from({ length: finalCount }).map(() => 
@@ -87,7 +112,6 @@ export function MemoryTest() {
     setState('MEMORIZING');
   };
 
-  // Timer for Memorizing phase
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (state === 'MEMORIZING') {
@@ -138,7 +162,6 @@ export function MemoryTest() {
               <p className="text-muted-foreground text-sm italic">Uji kapasitas penyimpanan data otak Anda.</p>
             </div>
 
-            {/* Level Configuration */}
             <div className="space-y-4">
               <div className="flex justify-between items-center px-2">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">1. Pilih Level Angka</p>
@@ -170,7 +193,17 @@ export function MemoryTest() {
               </div>
             </div>
 
-            {/* Speed Configuration */}
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <BrainCircuit className="w-6 h-6 text-primary" />
+                <div className="text-left">
+                  <Label htmlFor="neural-focus-test" className="text-sm font-bold block">Fokus Neural</Label>
+                  <p className="text-[10px] text-muted-foreground">Hanya uji angka yang belum 100% sinkron.</p>
+                </div>
+              </div>
+              <Switch id="neural-focus-test" checked={focusUnmastered} onCheckedChange={setFocusUnmastered} />
+            </div>
+
             <div className="space-y-4">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground text-left px-2">2. Durasi Per Angka</p>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -190,7 +223,6 @@ export function MemoryTest() {
               </div>
             </div>
 
-            {/* Question Count Configuration */}
             <div className="space-y-4">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground text-left px-2">3. Jumlah Angka</p>
               <div className="space-y-3">
@@ -211,7 +243,7 @@ export function MemoryTest() {
                 </div>
                 <Input 
                   type="number"
-                  placeholder="Masukkan jumlah kustom..."
+                  placeholder="Masukkan jumlah kustom (1-50)..."
                   className="bg-muted/20 border-border/50 text-center h-12 font-bold"
                   value={customItemCount}
                   onChange={(e) => { setCustomItemCount(e.target.value); setItemCount(0); }}
