@@ -6,10 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PAO_DATABASE } from '@/lib/pao-data';
 import { Flashcard } from '@/components/pao/Flashcard';
 import { BlitzQuiz } from '@/components/pao/BlitzQuiz';
+import { MemoryTest } from '@/components/pao/MemoryTest';
 import { NeuralProgress } from '@/components/pao/NeuralProgress';
 import { usePAOStore } from '@/hooks/use-pao-store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Zap, BarChart3, Hash } from 'lucide-react';
+import { BookOpen, Zap, BarChart3, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function MasterPAOPage() {
@@ -57,13 +58,16 @@ export default function MasterPAOPage() {
         <Tabs defaultValue="learn" className="w-full">
           <div className="flex justify-center mb-12">
             <TabsList className="bg-muted/40 h-12 p-1 rounded-xl border border-border/50">
-              <TabsTrigger value="learn" className="rounded-lg px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
+              <TabsTrigger value="learn" className="rounded-lg px-6 md:px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
                 <BookOpen className="w-4 h-4" /> Learn
               </TabsTrigger>
-              <TabsTrigger value="quiz" className="rounded-lg px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
+              <TabsTrigger value="quiz" className="rounded-lg px-6 md:px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
                 <Zap className="w-4 h-4" /> Blitz
               </TabsTrigger>
-              <TabsTrigger value="stats" className="rounded-lg px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
+              <TabsTrigger value="test" className="rounded-lg px-6 md:px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
+                <Brain className="w-4 h-4" /> Test
+              </TabsTrigger>
+              <TabsTrigger value="stats" className="rounded-lg px-6 md:px-8 gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-black">
                 <BarChart3 className="w-4 h-4" /> Stats
               </TabsTrigger>
             </TabsList>
@@ -112,6 +116,10 @@ export default function MasterPAOPage() {
 
           <TabsContent value="quiz">
             <BlitzQuiz />
+          </TabsContent>
+
+          <TabsContent value="test">
+            <MemoryTest />
           </TabsContent>
 
           <TabsContent value="stats">
