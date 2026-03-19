@@ -14,15 +14,21 @@ import { BookOpen, Zap, BarChart3, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function MasterPAOPage() {
-  const { neuralStrength } = usePAOStore();
+  const { blitzStrength, testStrength } = usePAOStore();
   const [learningIndex, setLearningIndex] = useState(0);
 
   const currentEntry = PAO_DATABASE[learningIndex];
-  const currentStrength = neuralStrength[currentEntry.number]?.strength || 0;
+  // Using Blitz strength for learning display
+  const currentStrength = blitzStrength[currentEntry.number]?.strength || 0;
   
-  const activatedCount = Object.keys(neuralStrength).length;
-  const avgSync = activatedCount > 0 
-    ? Math.round(Object.values(neuralStrength).reduce((a, b) => a + b.strength, 0) / activatedCount) 
+  // Stats for the header (combined Blitz and Test)
+  const blitzCount = Object.keys(blitzStrength).length;
+  const testCount = Object.keys(testStrength).length;
+  const totalActivated = new Set([...Object.keys(blitzStrength), ...Object.keys(testStrength)]).size;
+  
+  const totalSync = [...Object.values(blitzStrength), ...Object.values(testStrength)];
+  const avgSync = totalSync.length > 0 
+    ? Math.round(totalSync.reduce((a, b) => a + b.strength, 0) / totalSync.length) 
     : 0;
 
   const handleNext = () => setLearningIndex((prev) => (prev === 99 ? 0 : prev + 1));
@@ -45,7 +51,7 @@ export default function MasterPAOPage() {
           <div className="flex gap-8 items-center bg-muted/20 px-8 py-4 rounded-2xl border border-border/50">
             <div className="text-center">
               <p className="text-[10px] text-muted-foreground font-bold uppercase mb-1">Active</p>
-              <p className="text-2xl font-black text-primary font-headline">{activatedCount}/100</p>
+              <p className="text-2xl font-black text-primary font-headline">{totalActivated}/100</p>
             </div>
             <div className="w-px h-8 bg-border" />
             <div className="text-center">

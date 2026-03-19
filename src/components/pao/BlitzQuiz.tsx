@@ -43,7 +43,7 @@ const SPEEDS = [
 const QUESTION_OPTIONS = [10, 20, 30, 40, 50];
 
 export function BlitzQuiz() {
-  const { neuralStrength, updateStrength } = usePAOStore();
+  const { blitzStrength, updateStrength } = usePAOStore();
   
   const [state, setState] = useState<QuizState>('START');
   const [selectedLevels, setSelectedLevels] = useState<number[]>([1]);
@@ -79,10 +79,9 @@ export function BlitzQuiz() {
       pool = [...pool, ...PAO_DATABASE.slice(start, end)];
     });
 
-    // Neural Focus Logic: Filter only unmastered (< 100%)
     if (focusUnmastered) {
       pool = pool.filter(entry => {
-        const stats = neuralStrength[entry.number];
+        const stats = blitzStrength[entry.number];
         return !stats || stats.strength < 100;
       });
 
@@ -90,7 +89,7 @@ export function BlitzQuiz() {
         toast({
           variant: "destructive",
           title: "Level Selesai!",
-          description: "Semua angka di level ini sudah mencapai 100% Neural Sync.",
+          description: "Semua angka di level ini sudah mencapai 100% Neural Sync pada mode Blitz.",
         });
         return;
       }
@@ -101,7 +100,6 @@ export function BlitzQuiz() {
       finalCount = Math.max(1, parseInt(customCount));
     }
     
-    // Limit to pool size if focused
     if (focusUnmastered) {
       finalCount = Math.min(finalCount, pool.length);
     }
@@ -126,7 +124,7 @@ export function BlitzQuiz() {
     setSelectedOption(null);
     setIsChecking(false);
     setState('PLAYING');
-  }, [selectedLevels, neuralStrength, duration, questionCount, customCount, focusUnmastered]);
+  }, [selectedLevels, blitzStrength, duration, questionCount, customCount, focusUnmastered]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -149,9 +147,9 @@ export function BlitzQuiz() {
 
     if (isCorrect) {
       setScore(prev => prev + 1);
-      updateStrength(currentQ.entry.number, true);
+      updateStrength(currentQ.entry.number, true, 'blitz');
     } else {
-      updateStrength(currentQ.entry.number, false);
+      updateStrength(currentQ.entry.number, false, 'blitz');
     }
 
     setTimeout(() => {

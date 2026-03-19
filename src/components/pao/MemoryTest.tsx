@@ -42,7 +42,7 @@ const SPEEDS = [
 const ITEM_OPTIONS = [5, 10, 15, 20, 25];
 
 export function MemoryTest() {
-  const { neuralStrength } = usePAOStore();
+  const { testStrength, updateStrength } = usePAOStore();
   const [state, setState] = useState<TestState>('START');
   const [selectedLevels, setSelectedLevels] = useState<number[]>([1]);
   const [itemCount, setItemCount] = useState(5);
@@ -78,7 +78,7 @@ export function MemoryTest() {
 
     if (focusUnmastered) {
       pool = pool.filter(num => {
-        const stats = neuralStrength[num];
+        const stats = testStrength[num];
         return !stats || stats.strength < 100;
       });
 
@@ -86,7 +86,7 @@ export function MemoryTest() {
         toast({
           variant: "destructive",
           title: "Level Selesai!",
-          description: "Semua angka di level ini sudah mencapai 100% Neural Sync.",
+          description: "Semua angka di level ini sudah mencapai 100% Neural Sync pada mode Test.",
         });
         return;
       }
@@ -132,7 +132,10 @@ export function MemoryTest() {
   const handleRecall = () => {
     let correctCount = 0;
     userInputs.forEach((input, idx) => {
-      if (input === numbers[idx]) correctCount++;
+      const isCorrect = input === numbers[idx];
+      if (isCorrect) correctCount++;
+      // Update Neural Strength for Test mode
+      updateStrength(numbers[idx], isCorrect, 'test');
     });
     setScore(correctCount);
     setState('RESULT');
@@ -198,7 +201,7 @@ export function MemoryTest() {
                 <BrainCircuit className="w-6 h-6 text-primary" />
                 <div className="text-left">
                   <Label htmlFor="neural-focus-test" className="text-sm font-bold block">Fokus Neural</Label>
-                  <p className="text-[10px] text-muted-foreground">Hanya uji angka yang belum 100% sinkron.</p>
+                  <p className="text-[10px] text-muted-foreground">Hanya uji angka yang belum 100% sinkron pada mode Test.</p>
                 </div>
               </div>
               <Switch id="neural-focus-test" checked={focusUnmastered} onCheckedChange={setFocusUnmastered} />
