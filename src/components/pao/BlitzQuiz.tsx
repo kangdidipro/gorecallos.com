@@ -34,8 +34,8 @@ export function BlitzQuiz() {
 
   const generateQuiz = useCallback(() => {
     let pool = PAO_DATABASE;
-    if (level === 1) pool = PAO_DATABASE.slice(0, 10);
-    if (level === 2) pool = PAO_DATABASE.slice(10, 20);
+    if (level === 1) pool = PAO_DATABASE.slice(0, 20);
+    if (level === 2) pool = PAO_DATABASE.slice(0, 50);
 
     const weightedPool = [...pool];
     Object.keys(neuralStrength).forEach(numStr => {
@@ -99,22 +99,9 @@ export function BlitzQuiz() {
       updateStrength(currentQ.entry.number, true);
     } else {
       updateStrength(currentQ.entry.number, false);
-      if (answer !== '') {
-        toast({
-          title: "Salah!",
-          description: `Angka ${currentQ.entry.number} seharusnya: ${correctAns}`,
-          variant: "destructive"
-        });
-      } else {
-         toast({
-          title: "Waktu Habis!",
-          description: `Angka ${currentQ.entry.number} adalah: ${correctAns}`,
-          variant: "destructive"
-        });
-      }
     }
 
-    // Delay 1 detik agar pengguna bisa melihat feedback visual pada tombol
+    // Memberikan jeda visual agar pengguna bisa melihat apakah jawabannya benar/salah
     setTimeout(() => {
       if (currentIndex < questions.length - 1) {
         setCurrentIndex(prev => prev + 1);
@@ -155,8 +142,8 @@ export function BlitzQuiz() {
                   onClick={() => setLevel(l as QuizLevel)}
                 >
                   <span className="text-lg font-bold">Level {l}</span>
-                  <span className="text-xs opacity-70">
-                    {l === 1 ? "Tokoh (00-09)" : l === 2 ? "Tokoh & Aksi (10-19)" : "Campuran (Semua)"}
+                  <span className="text-[10px] opacity-70">
+                    {l === 1 ? "Tokoh (00-19)" : l === 2 ? "Tokoh & Aksi (00-49)" : "Campuran (Semua)"}
                   </span>
                 </Button>
               ))}

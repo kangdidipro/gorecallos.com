@@ -16,65 +16,72 @@ export function Flashcard({ entry, strength }: FlashcardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
   return (
-    <div 
-      className="relative w-full max-w-lg aspect-[4/5] md:aspect-[3/4] cursor-pointer perspective-1000 group"
-      onClick={() => setIsFlipped(!isFlipped)}
-    >
+    <div className="relative w-full max-w-lg aspect-[3/4] perspective-1000 group mx-auto">
+      {/* Deck Layers (Visual Stack) */}
+      <div className="absolute inset-0 bg-primary/5 rounded-2xl border border-primary/10 translate-x-2 translate-y-2 -z-10" />
+      <div className="absolute inset-0 bg-primary/10 rounded-2xl border border-primary/20 translate-x-4 translate-y-4 -z-20 shadow-xl" />
+
       <motion.div
-        className="w-full h-full relative transition-all duration-500 preserve-3d"
+        className="w-full h-full relative preserve-3d cursor-pointer"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+        onClick={() => setIsFlipped(!isFlipped)}
       >
         {/* Front Side */}
         <Card className={cn(
-          "absolute inset-0 w-full h-full backface-hidden flex flex-col items-center justify-center p-12",
-          "bg-card border-2 border-primary/20 hover:border-primary/50 transition-colors shadow-2xl"
+          "absolute inset-0 w-full h-full backface-hidden flex flex-col items-center justify-center p-8",
+          "bg-card border-2 border-primary/20 hover:border-primary/50 transition-colors shadow-2xl rounded-2xl"
         )}>
-          <div className="absolute top-6 right-6 text-xs font-bold text-primary/40 uppercase tracking-widest">
-            Neural Strength: {strength}%
+          <div className="absolute top-6 right-8 text-[10px] font-black text-primary/60 uppercase tracking-[0.2em]">
+            Neural Sync: {strength}%
           </div>
-          <div className="text-9xl font-black font-headline text-primary neon-glow animate-glow-pulse">
-            {entry.number}
+          
+          <div className="relative">
+             <div className="absolute -inset-8 bg-primary/10 blur-3xl rounded-full opacity-50" />
+             <div className="text-[12rem] font-black font-headline text-primary neon-glow leading-none relative z-10">
+              {entry.number}
+            </div>
           </div>
-          <div className="mt-12 text-muted-foreground uppercase tracking-widest text-sm font-bold opacity-60">
-            Sentuh untuk Membalik
+
+          <div className="mt-auto pt-8 text-muted-foreground uppercase tracking-[0.3em] text-[10px] font-bold opacity-40">
+            Tap to Reveal
           </div>
         </Card>
 
         {/* Back Side */}
         <Card className={cn(
-          "absolute inset-0 w-full h-full backface-hidden rotate-y-180 flex flex-col p-10 overflow-y-auto",
-          "bg-card border-2 border-secondary/20 shadow-2xl"
+          "absolute inset-0 w-full h-full backface-hidden rotate-y-180 flex flex-col p-8 overflow-y-auto",
+          "bg-card border-2 border-secondary/20 shadow-2xl rounded-2xl"
         )}>
-          <div className="flex justify-between items-start mb-8">
-            <span className="text-5xl font-headline font-bold text-secondary">{entry.number}</span>
+          <div className="flex justify-between items-center mb-8 pb-4 border-b border-border/50">
+            <span className="text-4xl font-headline font-black text-secondary">{entry.number}</span>
             <div className="text-right">
-              <span className="block text-xs text-muted-foreground uppercase tracking-wider font-bold">Identitas Neural</span>
+              <span className="block text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Data Terenkripsi</span>
             </div>
           </div>
 
-          <div className="space-y-8 flex-1">
-            <section>
-              <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-1 opacity-70">Person (Tokoh)</h4>
-              <p className="text-3xl font-headline font-bold text-foreground">{entry.person}</p>
+          <div className="space-y-6 flex-1">
+            <section className="space-y-1">
+              <h4 className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] opacity-60">Person</h4>
+              <p className="text-3xl font-headline font-bold text-foreground leading-tight">{entry.person}</p>
             </section>
             
-            <section>
-              <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-1 opacity-70">Action (Aksi)</h4>
-              <p className="text-3xl font-headline font-bold text-foreground">{entry.action}</p>
+            <section className="space-y-1">
+              <h4 className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] opacity-60">Action</h4>
+              <p className="text-3xl font-headline font-bold text-foreground leading-tight">{entry.action}</p>
             </section>
 
-            <section>
-              <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-1 opacity-70">Object (Benda)</h4>
-              <p className="text-3xl font-headline font-bold text-foreground">{entry.object}</p>
+            <section className="space-y-1">
+              <h4 className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] opacity-60">Object</h4>
+              <p className="text-3xl font-headline font-bold text-foreground leading-tight">{entry.object}</p>
             </section>
 
-            <section className="pt-6 border-t border-border mt-auto">
-              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">Etimologi / Logika Visual</h4>
-              <p className="text-base leading-relaxed text-muted-foreground italic">
+            <div className="mt-auto pt-6 border-t border-border/50">
+              <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Visual Etymology</h4>
+              <p className="text-sm leading-relaxed text-muted-foreground/80 italic font-medium">
                 {entry.etymology}
               </p>
-            </section>
+            </div>
           </div>
         </Card>
       </motion.div>
