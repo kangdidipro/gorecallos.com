@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PAO_DATABASE, PAOEntry } from '@/lib/pao-data';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import { usePAOStore } from '@/hooks/use-pao-store';
 import { Timer, X, CheckCircle2, AlertCircle, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -33,12 +34,16 @@ const SPEEDS = [
   { label: 'Sangat Cepat', value: 1.5 },
 ];
 
+const QUESTION_OPTIONS = [10, 20, 30, 40, 50];
+
 export function BlitzQuiz() {
   const { neuralStrength, updateStrength } = usePAOStore();
   
   const [state, setState] = useState<QuizState>('START');
   const [selectedLevels, setSelectedLevels] = useState<number[]>([1]);
   const [duration, setDuration] = useState(5);
+  const [questionCount, setQuestionCount] = useState(10);
+  const [customCount, setCustomCount] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(5);
@@ -70,6 +75,11 @@ export function BlitzQuiz() {
   const generateQuiz = useCallback(() => {
     if (selectedLevels.length === 0) return;
 
+    let finalCount = questionCount;
+    if (customCount && !isNaN(parseInt(customCount))) {
+      finalCount = Math.max(1, parseInt(customCount));
+    }
+
     let pool: PAOEntry[] = [];
     selectedLevels.forEach(lvl => {
       const start = (lvl - 1) * 10;
@@ -86,7 +96,7 @@ export function BlitzQuiz() {
       }
     });
 
-    const selectedEntries = Array.from({ length: 10 }).map(() => weightedPool[Math.floor(Math.random() * weightedPool.length)]);
+    const selectedEntries = Array.from({ length: finalCount }).map(() => weightedPool[Math.floor(Math.random() * weightedPool.length)]);
 
     const quizQuestions = selectedEntries.map((entry) => {
       const types: ('person' | 'action' | 'object')[] = ['person', 'action', 'object'];
@@ -107,7 +117,7 @@ export function BlitzQuiz() {
     setSelectedOption(null);
     setIsChecking(false);
     setState('PLAYING');
-  }, [selectedLevels, neuralStrength, duration]);
+  }, [selectedLevels, neuralStrength, duration, questionCount, customCount]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -162,7 +172,7 @@ export function BlitzQuiz() {
           >
             <div className="space-y-2">
               <h2 className="text-4xl font-bold font-headline text-primary neon-glow">The Blitz Quiz</h2>
-              <p className="text-muted-foreground text-sm">Sesuaikan level dan kecepatan untuk melatih refleks memori.</p>
+              <p className="text-muted-foreground text-sm">Sesuaikan konfigurasi latihan Anda.</p>
             </div>
 
             {/* Level Configuration */}
@@ -235,6 +245,48 @@ export function BlitzQuiz() {
                     {s.label}
                   </Button>
                 ))}
+              </div>
+            </div>
+
+            {/* Question Count Configuration */}
+            <div className="space-y-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground text-left px-2">3. Jumlah Pertanyaan</p>
+              <div className="space-y-3">
+                <div className="grid grid-cols-5 gap-2">
+                  {QUESTION_OPTIONS.map((count) => (
+                    <Button
+                      key={count}
+                      variant="outline"
+                      className={cn(
+                        "h-10 text-[11px] font-bold border-2",
+                        questionCount === count && !customCount
+                          ? "bg-primary text-black border-primary"
+                          : "border-primary/10 text-muted-foreground"
+                      )}
+                      onClick={() => {
+                        setQuestionCount(count);
+                        setCustomCount("");
+                      }}
+                    >
+                      {count}
+                    </Button>
+                  ))}
+                </div>
+                <div className="relative">
+                  <Input 
+                    type="number"
+                    placeholder="Masukkan jumlah kustom..."
+                    className="bg-muted/20 border-border/50 text-center h-12 font-bold"
+                    value={customCount}
+                    onChange={(e) => {
+                      setCustomCount(e.target.value);
+                      setQuestionCount(0); // Mark custom as active
+                    }}
+                  />
+                  {customCount && (
+                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary uppercase">Kustom</div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -324,7 +376,7 @@ export function BlitzQuiz() {
             className="text-center space-y-8 py-12"
           >
             <div className="relative inline-block">
-              {score > 7 ? (
+              {score > (questions.length * 0.7) ? (
                 <CheckCircle2 className="w-24 h-24 text-primary mx-auto mb-4" />
               ) : (
                 <AlertCircle className="w-24 h-24 text-secondary mx-auto mb-4" />
