@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { PAOEntry } from '@/lib/pao-data';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, icons } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FlashcardProps {
@@ -18,6 +18,9 @@ interface FlashcardProps {
 
 export function Flashcard({ entry, strength, onNext, onPrev }: FlashcardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
+
+  // Dynamic Lucide Icon
+  const IconComponent = (icons as any)[entry.icon] || icons.Brain;
 
   return (
     <div className="relative w-full max-w-lg aspect-[4/5] mx-auto group">
@@ -67,8 +70,13 @@ export function Flashcard({ entry, strength, onNext, onPrev }: FlashcardProps) {
               Neural Sync: {strength}%
             </div>
             
-            <div className="text-[12rem] font-black font-headline text-primary neon-glow leading-none select-none">
-              {entry.number}
+            <div className="relative">
+              <div className="text-[12rem] font-black font-headline text-primary neon-glow leading-none select-none">
+                {entry.number}
+              </div>
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 opacity-20">
+                <IconComponent className="w-24 h-24 text-primary" strokeWidth={1} />
+              </div>
             </div>
 
             <div className="mt-auto text-muted-foreground/40 uppercase tracking-[0.4em] text-[10px] font-bold">
@@ -102,7 +110,10 @@ export function Flashcard({ entry, strength, onNext, onPrev }: FlashcardProps) {
             "bg-card border-2 border-primary/10 shadow-2xl rounded-3xl"
           )}>
             <div className="flex justify-between items-center mb-8 pb-4 border-b border-border/50">
-              <span className="text-5xl font-headline font-black text-primary">{entry.number}</span>
+              <div className="flex items-center gap-4">
+                <span className="text-5xl font-headline font-black text-primary">{entry.number}</span>
+                <IconComponent className="w-8 h-8 text-primary/60" />
+              </div>
               <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase opacity-40">Tersinkronisasi</span>
             </div>
 
