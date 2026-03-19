@@ -294,7 +294,9 @@ export function BlitzQuiz() {
             <Progress value={(timeLeft / duration) * 100} className="h-2 bg-muted" />
             <div className="text-center py-8">
               <div className="text-8xl font-black font-headline text-primary neon-glow mb-4">{questions[currentIndex].entry.number}</div>
-              <div className="text-xl font-medium text-secondary italic">Siapakah {questions[currentIndex].type === 'person' ? 'Tokohnya' : questions[currentIndex].type === 'action' ? 'Aksinya' : 'Bendanya'}?</div>
+              <div className="text-xl font-medium text-secondary italic">
+                {questions[currentIndex].type === 'person' ? 'Siapakah Tokohnya?' : questions[currentIndex].type === 'action' ? 'Apakah Aksinya?' : 'Apakah Bendanya?'}
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {questions[currentIndex].options.map((option, idx) => {
